@@ -197,20 +197,36 @@ const displayTitle = titleVi || title;
   }
 
   [data-theme="light"] .btn-secondary {
-    background-color: #FFFFFF;
-    color: #212529;
-    border: 1.5px solid #212529; /* Darker border for better visibility */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background-color: #F0F0F0; /* Light gray background */
+    color: #111111; /* Very dark text */
+    border: 2px solid #111111; /* Thick dark border */
+    font-weight: 700;
   }
 
   [data-theme="light"] .btn-secondary:hover {
-    background-color: #F8F9FA;
+    background-color: var(--color-primary);
     border-color: var(--color-primary);
-    color: var(--color-primary);
+    color: #FFFFFF;
   }
 
-  [data-theme="light"] .btn-secondary svg {
-    color: inherit;
+  [data-theme="light"] .hero__meta {
+    color: #333333; /* Darker meta text */
+    font-weight: 500;
+  }
+
+  [data-theme="light"] .hero__divider {
+    color: #999999;
+  }
+
+  [data-theme="light"] .hero__synopsis {
+    color: #444444; /* Darker synopsis text */
+    font-weight: 400;
+  }
+
+  [data-theme="light"] .hero__rating {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
   }
 
   /* Responsive */
