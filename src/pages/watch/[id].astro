@@ -1,0 +1,546 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import VideoPlayer from '../../components/media/VideoPlayer.astro';
+import { getMovieDetailBySlug, getNewUpdatedMovies, getImageUrl } from '../../lib/movieService';
+
+const { id } = Astro.params;
+const url = Astro.url;
+const episodeSlug = url.searchParams.get('ep');
+
+if (!id) {
+  return Astro.redirect('/movies');
+}
+
+// Fetch movie details
+const movieData = await getMovieDetailBySlug(id);
+const movie = movieData?.movie;
+const episodes = movieData?.episodes || [];
+
+if (!movie) {
+  return Astro.redirect('/movies');
+}
+
+// Get current episode - default to first episode of first server
+const serverData = episodes[0]?.server_data || [];
+const currentEpisode = episodeSlug 
+  ? serverData.find((ep: any) => ep.slug === episodeSlug) || serverData[0]
+  : serverData[0];
+
+const videoUrl = currentEpisode?.link_embed || '';
+
+// Fetch related movies
+const relatedRes = await getNewUpdatedMovies(1);
+const relatedMovies = relatedRes?.items?.slice(0, 8) || [];
+
+// Prepare episodes data for client-side
+const episodesJson = JSON.stringify(episodes);
+---
+
+<BaseLayout title={`Xem ${movie.name} ${currentEpisode?.name || ''} - Movie247`}>
+  <Header />
+  
+  <main class="watch-page">
+    <div class="container">
+      <!-- Video Player -->
+      <div class="player-section">
+        <VideoPlayer 
+          videoUrl={videoUrl} 
+          title={`${movie.name} - ${currentEpisode?.name || 'Full'}`}
+          poster={getImageUrl(movie.poster_url)}
+          quality={movie.quality || 'HD'}
+          lang={movie.lang || 'Vietsub'}
+        />
+        
+        <!-- Player Header -->
+        <div class="player-header">
+          <div class="player-title">
+            <h1>{movie.name}</h1>
+            <span class="current-episode">{currentEpisode?.name || 'Full'}</span>
+          </div>
+          <div class="player-actions">
+            <button class="action-btn" id="bookmark-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+              Lưu
+            </button>
+            <button class="action-btn" id="share-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Chia sẻ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Server Selection -->
+          {episodes.length > 0 && (
+            <div class="control-section">
+              <h3>Chọn Server</h3>
+              <div class="server-list" id="server-list">
+                {episodes.map((server: any, index: number) => (
+                  <button 
+                    class:list={["server-btn", { active: index === 0 }]}
+                    data-server-index={index}
+                  >
+                    {server.server_name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Episode List -->
+          {serverData.length > 0 && (
+            <div class="control-section">
+              <h3>Danh Sách Tập ({serverData.length} tập)</h3>
+              <div class="episodes-grid" id="episodes-grid">
+                {serverData.map((ep: any) => (
+                  <button 
+                    class:list={["episode-btn", { active: ep.slug === currentEpisode?.slug }]}
+                    data-slug={ep.slug}
+                    data-embed={ep.link_embed}
+                    data-name={ep.name}
+                  >
+                    {ep.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Movie Info -->
+          <div class="control-section movie-info">
+            <h3>Thông Tin Phim</h3>
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="label">Trạng thái:</span>
+                <span class="value">{movie.episode_current}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Thời lượng:</span>
+                <span class="value">{movie.time || 'N/A'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Năm:</span>
+                <span class="value">{movie.year}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Quốc gia:</span>
+                <span class="value">{movie.country?.map((c: any) => c.name).join(', ') || 'N/A'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Thể loại:</span>
+                <span class="value">{movie.category?.map((c: any) => c.name).join(', ') || 'N/A'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Đạo diễn:</span>
+                <span class="value">{movie.director?.join(', ') || 'Đang cập nhật'}</span>
+              </div>
+            </div>
+            
+            <h4>Nội dung phim</h4>
+            <div class="synopsis" set:html={movie.content || 'Đang cập nhật...'} />
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <h3>Có Thể Bạn Thích</h3>
+          <div class="related-list">
+            {relatedMovies.map((rm: any) => (
+              <a href={`/movies/${rm.slug}`} class="related-item">
+                <img src={getImageUrl(rm.poster_url)} alt={rm.name} loading="lazy" />
+                <div class="related-info">
+                  <h4>{rm.name}</h4>
+                  <span>{rm.year || 2024}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .watch-page {
+    padding-top: var(--header-height);
+    min-height: 100vh;
+    background: var(--color-background);
+  }
+
+  /* Player Section */
+  .player-section {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) 0;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .player-title h1 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 4px;
+  }
+
+  .current-episode {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .player-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .action-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  /* Content Grid */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: var(--spacing-xl);
+  }
+
+  /* Control Sections */
+  .control-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .control-section h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-primary);
+  }
+
+  .control-section h4 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin: var(--spacing-lg) 0 var(--spacing-sm);
+    color: var(--color-text-primary);
+  }
+
+  /* Server List */
+  .server-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .server-btn {
+    padding: 8px 16px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .server-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .server-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  /* Episodes Grid */
+  .episodes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) var(--color-background);
+  }
+
+  .episode-btn {
+    min-width: 50px;
+    padding: 8px 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .episode-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .episode-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  /* Movie Info */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .info-row {
+    font-size: var(--font-size-sm);
+  }
+
+  .info-row .label {
+    color: var(--color-text-muted);
+    margin-right: 6px;
+  }
+
+  .info-row .value {
+    color: var(--color-text-secondary);
+  }
+
+  .synopsis {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  /* Sidebar */
+  .sidebar h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .related-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .related-item {
+    display: flex;
+    gap: var(--spacing-sm);
+    transition: opacity var(--transition-fast);
+  }
+
+  .related-item:hover {
+    opacity: 0.8;
+  }
+
+  .related-item img {
+    width: 70px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+
+  .related-info {
+    flex: 1;
+  }
+
+  .related-info h4 {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .related-info span {
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      order: -1;
+    }
+
+    .related-list {
+      flex-direction: row;
+      overflow-x: auto;
+      padding-bottom: var(--spacing-sm);
+    }
+
+    .related-item {
+      flex-direction: column;
+      min-width: 100px;
+    }
+
+    .related-item img {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .player-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script define:vars={{ episodesJson, movieSlug: movie.slug }}>
+  // Parse episodes data
+  const episodes = JSON.parse(episodesJson);
+  let currentServerIndex = 0;
+  
+  // Get DOM elements
+  const serverBtns = document.querySelectorAll('.server-btn');
+  const episodesGrid = document.getElementById('episodes-grid');
+  const videoIframe = document.getElementById('video-iframe');
+  const currentEpisodeEl = document.querySelector('.current-episode');
+  
+  // Handle server change
+  serverBtns.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      currentServerIndex = index;
+      
+      // Update active state
+      serverBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Update episodes grid
+      updateEpisodesGrid();
+    });
+  });
+  
+  function updateEpisodesGrid() {
+    if (!episodesGrid || !episodes[currentServerIndex]) return;
+    
+    const serverData = episodes[currentServerIndex].server_data;
+    episodesGrid.innerHTML = serverData.map((ep, idx) => `
+      <button 
+        class="episode-btn ${idx === 0 ? 'active' : ''}"
+        data-slug="${ep.slug}"
+        data-embed="${ep.link_embed}"
+        data-name="${ep.name}"
+      >
+        ${ep.name}
+      </button>
+    `).join('');
+    
+    // Re-attach click handlers
+    attachEpisodeHandlers();
+    
+    // Auto-play first episode of new server
+    if (serverData[0]) {
+      changeEpisode(serverData[0].link_embed, serverData[0].name, serverData[0].slug);
+    }
+  }
+  
+  function attachEpisodeHandlers() {
+    const episodeBtns = document.querySelectorAll('.episode-btn');
+    episodeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const embed = btn.dataset.embed;
+        const name = btn.dataset.name;
+        const slug = btn.dataset.slug;
+        
+        // Update active state
+        episodeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Change episode
+        changeEpisode(embed, name, slug);
+      });
+    });
+  }
+  
+  function changeEpisode(embedUrl, episodeName, episodeSlug) {
+    // Update iframe src
+    if (videoIframe) {
+      videoIframe.src = embedUrl;
+    }
+    
+    // Update episode name display
+    if (currentEpisodeEl) {
+      currentEpisodeEl.textContent = episodeName;
+    }
+    
+    // Update URL without reload
+    const newUrl = `/watch/${movieSlug}?ep=${episodeSlug}`;
+    window.history.pushState({}, '', newUrl);
+    
+    // Scroll to player
+    document.querySelector('.player-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  // Initial setup
+  attachEpisodeHandlers();
+  
+  // Share functionality
+  document.getElementById('share-btn')?.addEventListener('click', () => {
+    if (navigator.share) {
+      navigator.share({
+        title: document.title,
+        url: window.location.href
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Đã copy link!');
+    }
+  });
+  
+  // Bookmark functionality (demo)
+  document.getElementById('bookmark-btn')?.addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    btn.classList.toggle('active');
+    const isBookmarked = btn.classList.contains('active');
+    btn.querySelector('svg')?.setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
+  });
+</script>

@@ -1,0 +1,284 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import MovieCard from '../components/movie/MovieCard.astro';
+import { searchMoviesByKeyword, getImageUrl } from '../lib/movieService';
+
+const url = Astro.url;
+const keyword = url.searchParams.get('q') || '';
+const pageParam = parseInt(url.searchParams.get('page') || '1');
+
+let searchResults: any = null;
+if (keyword) {
+  searchResults = await searchMoviesByKeyword(keyword, pageParam);
+}
+
+const movies = searchResults?.data?.items || [];
+const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
+---
+
+<BaseLayout title={keyword ? `Tìm kiếm: ${keyword} - Movie247` : 'Tìm Kiếm Phim - Movie247'}>
+  <Header />
+  
+  <main class="page-content">
+    <div class="container">
+      <!-- Search Header -->
+      <div class="search-header">
+        <h1>Tìm Kiếm Phim</h1>
+        
+        <!-- Search Form -->
+        <form class="search-form" action="/search" method="get">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input 
+              type="text" 
+              name="q" 
+              value={keyword}
+              placeholder="Nhập tên phim, diễn viên..."
+              class="search-input"
+              autofocus
+            />
+            <button type="submit" class="search-btn">Tìm kiếm</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Results -->
+      {keyword ? (
+        <>
+          <div class="results-info">
+            <span>Tìm thấy {pagination.totalItems || movies.length} kết quả cho "{keyword}"</span>
+          </div>
+
+          {movies.length > 0 ? (
+            <div class="movies-grid">
+              {movies.map((movie: any) => (
+                <MovieCard
+                  id={movie.slug}
+                  title={movie.origin_name || movie.name}
+                  titleVi={movie.name}
+                  year={movie.year || 2024}
+                  rating={8.0}
+                  poster={getImageUrl(movie.poster_url)}
+                  genres={movie.category?.slice(0, 2).map((c: any) => c.name) || []}
+                  duration={movie.time || movie.episode_current || ''}
+                />
+              ))}
+            </div>
+          ) : (
+            <div class="empty-state">
+              <div class="empty-icon">🔍</div>
+              <h3>Không tìm thấy kết quả</h3>
+              <p>Thử tìm kiếm với từ khóa khác</p>
+            </div>
+          )}
+
+          <!-- Pagination -->
+          {pagination.totalPages > 1 && (
+            <div class="pagination">
+              {pageParam > 1 && (
+                <a href={`/search?q=${encodeURIComponent(keyword)}&page=${pageParam - 1}`} class="pagination-btn">
+                  ← Trước
+                </a>
+              )}
+              
+              <span class="pagination-info">Trang {pageParam} / {pagination.totalPages}</span>
+              
+              {pageParam < pagination.totalPages && (
+                <a href={`/search?q=${encodeURIComponent(keyword)}&page=${pageParam + 1}`} class="pagination-btn">
+                  Sau →
+                </a>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <div class="empty-state initial">
+          <div class="empty-icon">🎬</div>
+          <h3>Tìm kiếm phim yêu thích</h3>
+          <p>Nhập tên phim, diễn viên hoặc đạo diễn để tìm kiếm</p>
+        </div>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-content {
+    padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    min-height: 100vh;
+  }
+
+  /* Search Header */
+  .search-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .search-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  /* Search Form */
+  .search-form {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: border-color var(--transition-fast);
+  }
+
+  .search-input-wrapper:focus-within {
+    border-color: var(--color-primary);
+  }
+
+  .search-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    padding: var(--spacing-sm) 0;
+  }
+
+  .search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .search-input:focus {
+    outline: none;
+  }
+
+  .search-btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--color-primary);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-background);
+    transition: background var(--transition-fast);
+  }
+
+  .search-btn:hover {
+    background: var(--color-primary-hover);
+  }
+
+  /* Results */
+  .results-info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .movies-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+  }
+
+  .empty-state.initial {
+    padding: var(--spacing-4xl);
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .empty-state h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .empty-state p {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-2xl);
+    padding: var(--spacing-lg) 0;
+  }
+
+  .pagination-btn {
+    padding: 8px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+  }
+
+  .pagination-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  .pagination-info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .movies-grid { grid-template-columns: repeat(5, 1fr); }
+  }
+
+  @media (max-width: 992px) {
+    .movies-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .movies-grid { grid-template-columns: repeat(3, 1fr); }
+    
+    .search-input-wrapper {
+      flex-wrap: wrap;
+    }
+
+    .search-btn {
+      width: 100%;
+      margin-top: var(--spacing-sm);
+    }
+  }
+
+  @media (max-width: 576px) {
+    .movies-grid { 
+      grid-template-columns: repeat(2, 1fr); 
+      gap: var(--spacing-sm); 
+    }
+  }
+</style>

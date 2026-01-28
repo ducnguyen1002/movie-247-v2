@@ -1,0 +1,11 @@
+---
+// Helper component to get translations based on current language
+import { getCurrentLanguage } from '../lib/i18n';
+import { getTranslations } from '../lib/translations';
+
+// Get current language (server-side safe)
+const lang = typeof window !== 'undefined' ? getCurrentLanguage() : 'vi';
+const t = getTranslations(lang);
+
+export { t, lang };
+---

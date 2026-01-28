@@ -1,0 +1,431 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import MovieCard from '../../components/movie/MovieCard.astro';
+import { getMoviesByCategory, getMoviesByGenre, getMoviesByNation, getImageUrl } from '../../lib/movieService';
+import { MOVIE_GENRES, MOVIE_NATIONS } from '../../lib/constants';
+
+const url = Astro.url;
+const genreParam = url.searchParams.get('genre');
+const nationParam = url.searchParams.get('nation');
+const pageParam = parseInt(url.searchParams.get('page') || '1');
+
+// Fetch series based on filters
+let moviesData: any = null;
+let pageTitle = 'Phim Bộ';
+
+if (genreParam) {
+  moviesData = await getMoviesByGenre(genreParam, pageParam);
+  const genre = MOVIE_GENRES.find(g => g.slug === genreParam);
+  pageTitle = genre ? `Phim Bộ - ${genre.name}` : 'Phim Bộ Theo Thể Loại';
+} else if (nationParam) {
+  moviesData = await getMoviesByNation(nationParam, pageParam);
+  const nation = MOVIE_NATIONS.find(n => n.slug === nationParam);
+  pageTitle = nation ? `Phim Bộ - ${nation.name}` : 'Phim Bộ Theo Quốc Gia';
+} else {
+  moviesData = await getMoviesByCategory('phim-bo', pageParam, 24);
+}
+
+const movies = moviesData?.data?.items || [];
+const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
+---
+
+<BaseLayout title={`${pageTitle} - Movie247`}>
+  <Header />
+  
+  <main class="page-content">
+    <div class="container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>{pageTitle}</h1>
+        <p>Tổng cộng {pagination.totalItems || movies.length} phim bộ</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <!-- Category Links -->
+        <div class="filter-section">
+          <label>Loại:</label>
+          <div class="filter-pills">
+            <a href="/movies" class="filter-pill">
+              Phim Lẻ
+            </a>
+            <a href="/tv-shows" class:list={["filter-pill", { active: !genreParam && !nationParam }]}>
+              Phim Bộ
+            </a>
+            <a href="/movies?category=hoat-hinh" class="filter-pill">
+              Hoạt Hình
+            </a>
+          </div>
+        </div>
+
+        <!-- Genre Filter -->
+        <div class="filter-section">
+          <label>Thể loại:</label>
+          <select id="genre-select" class="filter-select">
+            <option value="">Tất cả</option>
+            {MOVIE_GENRES.map(genre => (
+              <option value={genre.slug} selected={genreParam === genre.slug}>{genre.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Nation Filter -->
+        <div class="filter-section">
+          <label>Quốc gia:</label>
+          <select id="nation-select" class="filter-select">
+            <option value="">Tất cả</option>
+            {MOVIE_NATIONS.map(nation => (
+              <option value={nation.slug} selected={nationParam === nation.slug}>{nation.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <!-- Active Filters -->
+      {(genreParam || nationParam) && (
+        <div class="active-filters">
+          <span>Đang lọc:</span>
+          {genreParam && (
+            <a href={`/tv-shows${nationParam ? `?nation=${nationParam}` : ''}`} class="filter-tag">
+              {MOVIE_GENRES.find(g => g.slug === genreParam)?.name}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </a>
+          )}
+          {nationParam && (
+            <a href={`/tv-shows${genreParam ? `?genre=${genreParam}` : ''}`} class="filter-tag">
+              {MOVIE_NATIONS.find(n => n.slug === nationParam)?.name}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </a>
+          )}
+          <a href="/tv-shows" class="clear-all">Xóa tất cả</a>
+        </div>
+      )}
+
+      <!-- Movies Grid -->
+      {movies.length > 0 ? (
+        <div class="movies-grid">
+          {movies.map((movie: any) => (
+            <a href={`/watch/${movie.slug}`} class="show-card">
+              <div class="show-poster">
+                <img src={getImageUrl(movie.poster_url)} alt={movie.name} loading="lazy" />
+                <div class="show-badge">{movie.episode_current || 'Đang cập nhật'}</div>
+                <div class="show-quality">{movie.quality || 'HD'}</div>
+              </div>
+              <div class="show-info">
+                <h3>{movie.name}</h3>
+                <div class="show-meta">
+                  <span>{movie.year || 2024}</span>
+                  {movie.country?.[0] && <span>• {movie.country[0].name}</span>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="empty-state">
+          <p>Không tìm thấy phim bộ nào.</p>
+          <a href="/tv-shows" class="btn btn-primary">Xem tất cả</a>
+        </div>
+      )}
+
+      <!-- Pagination -->
+      {pagination.totalPages > 1 && (
+        <div class="pagination">
+          {pageParam > 1 && (
+            <a href={`/tv-shows?${new URLSearchParams({
+              ...(genreParam && { genre: genreParam }),
+              ...(nationParam && { nation: nationParam }),
+              page: String(pageParam - 1)
+            }).toString()}`} class="pagination-btn">
+              ← Trước
+            </a>
+          )}
+          
+          <span class="pagination-info">Trang {pageParam} / {pagination.totalPages}</span>
+          
+          {pageParam < pagination.totalPages && (
+            <a href={`/tv-shows?${new URLSearchParams({
+              ...(genreParam && { genre: genreParam }),
+              ...(nationParam && { nation: nationParam }),
+              page: String(pageParam + 1)
+            }).toString()}`} class="pagination-btn">
+              Sau →
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-content {
+    padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    min-height: 100vh;
+  }
+
+  .page-header {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .page-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .page-header p {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+  }
+
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .filter-section label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+  .filter-pill {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .filter-pill:hover {
+    border-color: var(--color-text-muted);
+    color: var(--color-text-primary);
+  }
+
+  .filter-pill.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  .filter-select {
+    padding: 6px 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    min-width: 120px;
+  }
+
+  /* Active Filters */
+  .active-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+  }
+
+  .active-filters > span {
+    color: var(--color-text-muted);
+  }
+
+  .filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    color: var(--color-background);
+  }
+
+  .filter-tag:hover {
+    opacity: 0.9;
+    color: var(--color-background);
+  }
+
+  .clear-all {
+    color: var(--color-text-muted);
+    text-decoration: underline;
+  }
+
+  /* Grid */
+  .movies-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  /* Show Card */
+  .show-card {
+    display: block;
+    transition: transform var(--transition-normal);
+  }
+
+  .show-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .show-poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .show-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .show-badge {
+    position: absolute;
+    bottom: var(--spacing-sm);
+    left: var(--spacing-sm);
+    padding: 2px 8px;
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-background);
+  }
+
+  .show-quality {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    color: var(--color-text-primary);
+  }
+
+  .show-info {
+    padding: var(--spacing-sm) 0;
+  }
+
+  .show-info h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .show-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--color-text-muted);
+  }
+
+  .empty-state p {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-2xl);
+    padding: var(--spacing-lg) 0;
+  }
+
+  .pagination-btn {
+    padding: 8px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+  }
+
+  .pagination-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  .pagination-info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .movies-grid { grid-template-columns: repeat(5, 1fr); }
+  }
+
+  @media (max-width: 992px) {
+    .movies-grid { grid-template-columns: repeat(4, 1fr); }
+    .filters { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (max-width: 768px) {
+    .movies-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 576px) {
+    .movies-grid { grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm); }
+  }
+</style>
+
+<script>
+  const genreSelect = document.getElementById('genre-select') as HTMLSelectElement;
+  const nationSelect = document.getElementById('nation-select') as HTMLSelectElement;
+
+  function applyFilters() {
+    const params = new URLSearchParams();
+    if (genreSelect?.value) params.set('genre', genreSelect.value);
+    if (nationSelect?.value) params.set('nation', nationSelect.value);
+    window.location.href = `/tv-shows${params.toString() ? '?' + params.toString() : ''}`;
+  }
+
+  genreSelect?.addEventListener('change', applyFilters);
+  nationSelect?.addEventListener('change', applyFilters);
+</script>

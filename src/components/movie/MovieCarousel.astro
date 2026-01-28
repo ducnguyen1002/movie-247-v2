@@ -1,0 +1,187 @@
+---
+import MovieCard from './MovieCard.astro';
+import { getImageUrl } from '../../lib/movieService';
+
+interface Props {
+  title: string;
+  movies: any[];
+  viewAllLink?: string;
+  useApi?: boolean;
+}
+
+const { title, movies, viewAllLink, useApi = false } = Astro.props;
+---
+
+<section class="carousel-section">
+  <div class="container">
+    <div class="carousel-header">
+      <h2 class="carousel-title">{title}</h2>
+      <div class="carousel-actions">
+        {viewAllLink && (
+          <a href={viewAllLink} class="view-all">
+            Xem tất cả
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        )}
+        <div class="carousel-nav">
+          <button class="nav-btn nav-prev" aria-label="Previous">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          <button class="nav-btn nav-next" aria-label="Next">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="carousel-track">
+      {
+        movies.map((movie: any) => (
+          <MovieCard
+            id={movie.slug}
+            title={movie.origin_name || movie.name}
+            titleVi={movie.name}
+            year={movie.year || 2024}
+            rating={8.0}
+            poster={getImageUrl(movie.poster_url)}
+            genres={movie.category?.slice(0, 2).map((c: any) => c.name) || []}
+            duration={movie.time || movie.episode_current || ''}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .carousel-section {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-md);
+  }
+
+  .carousel-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .carousel-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .view-all {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast);
+  }
+
+  .view-all:hover {
+    color: var(--color-primary);
+  }
+
+  .carousel-nav {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .nav-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel-track > :global(*) {
+    flex: 0 0 calc((100% - 5 * var(--spacing-md)) / 6);
+    min-width: 150px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .carousel-track > :global(*) {
+      flex: 0 0 calc((100% - 4 * var(--spacing-md)) / 5);
+    }
+  }
+
+  @media (max-width: 992px) {
+    .carousel-track > :global(*) {
+      flex: 0 0 calc((100% - 3 * var(--spacing-md)) / 4);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .carousel-track > :global(*) {
+      flex: 0 0 calc((100% - 2 * var(--spacing-md)) / 3);
+    }
+
+    .view-all {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .carousel-track > :global(*) {
+      flex: 0 0 calc((100% - var(--spacing-md)) / 2);
+      min-width: 130px;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.carousel-section').forEach(section => {
+    const track = section.querySelector('.carousel-track') as HTMLElement;
+    const prevBtn = section.querySelector('.nav-prev');
+    const nextBtn = section.querySelector('.nav-next');
+    
+    const scrollAmount = 300;
+
+    prevBtn?.addEventListener('click', () => {
+      track?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      track?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+  });
+</script>

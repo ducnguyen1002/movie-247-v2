@@ -1,0 +1,173 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  titleVi?: string;
+  year: number;
+  rating: number;
+  poster: string;
+  genres?: string[];
+  duration?: string;
+}
+
+const { id, title, titleVi, year, rating, poster, genres = [], duration } = Astro.props;
+const displayTitle = titleVi || title;
+---
+
+<a href={`/movies/${id}`} class="movie-card">
+  <div class="movie-card__poster">
+    <img src={poster} alt={displayTitle} class="movie-card__img" loading="lazy"/>
+    <div class="movie-card__overlay">
+      <button class="play-btn" aria-label="Xem phim">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="movie-card__info">
+    <h3 class="movie-card__title">{displayTitle}</h3>
+    <div class="movie-card__meta">
+      <span class="movie-card__rating">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        {rating.toFixed(1)}
+      </span>
+      <span class="movie-card__dot">•</span>
+      <span class="movie-card__year">{year}</span>
+      {genres.length > 0 && (
+        <>
+          <span class="movie-card__dot">•</span>
+          <span class="movie-card__genre">{genres[0]}</span>
+        </>
+      )}
+    </div>
+  </div>
+</a>
+
+<style>
+  .movie-card {
+    display: block;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition-normal);
+  }
+
+  .movie-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .movie-card:hover .movie-card__overlay {
+    opacity: 1;
+  }
+
+  .movie-card:hover .movie-card__poster img {
+    transform: scale(1.05);
+  }
+
+  /* Poster */
+  .movie-card__poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .movie-card__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .movie-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .play-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-background);
+    transition: transform var(--transition-fast);
+  }
+
+  .play-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .play-btn svg {
+    margin-left: 2px;
+  }
+
+  /* Info */
+  .movie-card__info {
+    padding: var(--spacing-sm) 0;
+  }
+
+  .movie-card__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+  }
+
+  .movie-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  .movie-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--color-rating);
+  }
+
+  .movie-card__rating svg {
+    fill: var(--color-rating);
+  }
+
+  .movie-card__dot {
+    color: var(--color-text-muted);
+    font-size: 8px;
+  }
+
+  /* Responsive */
+  @media (max-width: 576px) {
+    .movie-card__title {
+      font-size: var(--font-size-xs);
+    }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    .play-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+</style>
