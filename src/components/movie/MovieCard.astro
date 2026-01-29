@@ -209,6 +209,7 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 
   .popup-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     font-size: 11px;
     color: var(--color-text-secondary);
@@ -322,6 +323,9 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     gap: 6px;
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .movie-card__rating {
