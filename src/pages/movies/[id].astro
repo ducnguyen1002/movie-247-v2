@@ -8,8 +8,6 @@ import MovieCarousel from '../../components/movie/MovieCarousel.astro';
 import { getMovieDetailBySlug, getNewUpdatedMovies, getImageUrl } from '../../lib/movieService';
 
 const { id } = Astro.params;
-console.log("id: ", id);
-
 
 if (!id) {
   return Astro.redirect('/movies');
