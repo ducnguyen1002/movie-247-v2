@@ -87,13 +87,24 @@ const { t, translations } = useTranslations(langCookie?.value);
                 </svg>
                 {translations.common.watchTrailer}
               </button>
-              <button class="btn-hero btn-hero--outline">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <button 
+                class="btn-hero btn-hero--outline hero-watchlist-btn"
+                data-movie={JSON.stringify({
+                  id: movie.id,
+                  slug: movie.id,
+                  name: movie.title,
+                  poster_url: movie.backdrop,
+                  year: movie.year || 2024
+                })}
+              >
+                <svg class="icon-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="12" y1="8" x2="12" y2="16"/>
                   <line x1="8" y1="12" x2="16" y2="12"/>
                 </svg>
-                {translations.common.addWatchlist}
+                <svg class="icon-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span class="btn-text">{translations.common.addWatchlist}</span>
               </button>
             </div>
           </div>
@@ -527,18 +538,65 @@ const { t, translations } = useTranslations(langCookie?.value);
 </style>
 
 <script>
+  import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
+  import { useTranslations } from '../../lib/useTranslations';
+
   document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('heroSlider');
     if (!slider) return;
+
+    // Get translations for client-side
+    const lang = document.documentElement.lang || 'vi';
+    const { translations } = useTranslations(lang);
 
     const slides = slider.querySelectorAll('.hero-slide');
     const dots = slider.querySelectorAll('.hero-dot');
     const prevBtn = slider.querySelector('.hero-slider__arrow--prev');
     const nextBtn = slider.querySelector('.hero-slider__arrow--next');
+    const watchlistBtns = slider.querySelectorAll('.hero-watchlist-btn');
     
     let currentIndex = 0;
     let autoPlayInterval: ReturnType<typeof setInterval>;
     const autoPlayDelay = 6000;
+
+    // Watchlist Logic
+    watchlistBtns.forEach(btn => {
+      const watchlistBtn = btn as HTMLButtonElement;
+      const movieData = JSON.parse(watchlistBtn.dataset.movie || '{}');
+      const btnText = watchlistBtn.querySelector('.btn-text');
+      const iconPlus = watchlistBtn.querySelector('.icon-plus') as SVGElement;
+      const iconCheck = watchlistBtn.querySelector('.icon-check') as SVGElement;
+
+      function updateBtnUI() {
+        const inWatchlist = isInWatchlist(movieData.slug);
+        if (btnText) {
+          btnText.textContent = inWatchlist 
+            ? translations.common.removeWatchlist 
+            : translations.common.addWatchlist;
+        }
+        if (iconPlus && iconCheck) {
+          iconPlus.style.display = inWatchlist ? 'none' : 'block';
+          iconCheck.style.display = inWatchlist ? 'block' : 'none';
+        }
+        watchlistBtn.classList.toggle('active', inWatchlist);
+      }
+
+      updateBtnUI();
+
+      watchlistBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const added = toggleWatchlist(movieData);
+        updateBtnUI();
+        
+        const message = added ? translations.messages.addedToWatchlist : translations.messages.removedFromWatchlist;
+        if (typeof (window as any).showToast === 'function') {
+          (window as any).showToast(message, 'success');
+        } else {
+          alert(message);
+        }
+      });
+    });
 
     function goToSlide(index: number) {
       slides.forEach((slide, i) => {

@@ -163,6 +163,9 @@ const { translations, lang } = useTranslations(langCookie?.value);
         if (slug) {
           removeFromWatchlist(slug);
           renderWatchlist();
+          if (typeof (window as any).showToast === 'function') {
+            (window as any).showToast(translations.messages.removedFromWatchlist, 'info');
+          }
         }
       });
     });

@@ -271,11 +271,19 @@ const { translations } = useTranslations(langCookie?.value);
     const confirmPassword = (document.getElementById('confirm-password') as HTMLInputElement)?.value;
     
     if (password !== confirmPassword) {
-      alert('Error');
+      if (typeof (window as any).showToast === 'function') {
+        (window as any).showToast('Mật khẩu xác nhận không khớp!', 'error');
+      } else {
+        alert('Error');
+      }
       return;
     }
     
-    alert('OK');
-    window.location.href = '/login';
+    if (typeof (window as any).showToast === 'function') {
+      (window as any).showToast('Đăng ký tài khoản thành công!', 'success');
+    }
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 1500);
   });
 </script>

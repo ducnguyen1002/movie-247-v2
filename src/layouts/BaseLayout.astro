@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import GSAPInit from '../components/common/GSAPInit.astro';
+import Toast from '../components/common/Toast.astro';
 
 interface Props {
   title?: string;
@@ -30,5 +31,6 @@ const {
   
   <!-- GSAP Animations -->
   <GSAPInit />
+  <Toast />
 </body>
 </html>

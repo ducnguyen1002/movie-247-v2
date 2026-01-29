@@ -89,7 +89,7 @@
   --transition-slow: 300ms ease;
 
   /* Container */
-  --container-max: 1400px;
+  --container-max: 1280px;
   --container-padding: var(--spacing-lg);
 
   /* Header */
@@ -146,6 +146,8 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
@@ -155,6 +157,8 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-background);
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 a {
@@ -167,7 +171,9 @@ a:hover {
   color: var(--color-primary);
 }
 
-img {
+img,
+iframe,
+video {
   max-width: 100%;
   height: auto;
   display: block;

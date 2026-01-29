@@ -243,7 +243,7 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
   /* Content */
   .movie-content {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 280px minmax(0, 1fr);
     gap: var(--spacing-2xl);
     padding: var(--spacing-2xl) 0;
   }
@@ -522,7 +522,11 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
       
       // Feedback toast
       const message = added ? translations.messages.addedToWatchlist : translations.messages.removedFromWatchlist;
-      alert(message);
+      if (typeof (window as any).showToast === 'function') {
+        (window as any).showToast(message, 'success');
+      } else {
+        alert(message);
+      }
     });
   }
 

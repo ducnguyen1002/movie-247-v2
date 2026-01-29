@@ -51,7 +51,7 @@ const navLinks = [
       <!-- Actions -->
       <div class="header__actions">
         <!-- Language Switcher -->
-        <div class="language-wrapper">
+        <div class="language-wrapper hide-on-mobile">
           <button class="header-btn lang-btn" aria-label="Chuyển ngôn ngữ" id="headerLangBtn">
             <span class="lang-flag">{lang === 'vi' ? '🇻🇳' : '🇺🇸'}</span>
             <span class="lang-text">{lang === 'vi' ? 'VI' : 'EN'}</span>
@@ -69,7 +69,7 @@ const navLinks = [
         </div>
 
         <!-- Theme Switcher -->
-        <button class="header-btn theme-btn" aria-label="Chuyển theme" data-theme-switcher>
+        <button class="header-btn theme-btn hide-on-mobile" aria-label="Chuyển theme" data-theme-switcher>
           <svg class="theme-icon theme-icon--sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
@@ -95,7 +95,7 @@ const navLinks = [
         </a>
 
         <!-- User -->
-        <a href="/login" class="header-btn user-btn" aria-label="Tài khoản">
+        <a href="/login" class="header-btn user-btn hide-on-mobile" aria-label="Tài khoản">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
@@ -126,8 +126,31 @@ const navLinks = [
         </li>
       ))}
       <li class="mobile-nav-divider"></li>
-      <li><a href="/login" class="mobile-nav-link">Đăng Nhập</a></li>
-      <li><a href="/register" class="mobile-nav-link">Đăng Ký</a></li>
+      <li><a href="/login" class="mobile-nav-link">{t.auth.login}</a></li>
+      <li><a href="/register" class="mobile-nav-link">{t.auth.register}</a></li>
+      <li class="mobile-nav-divider"></li>
+      <li class="mobile-nav-item secondary-actions">
+        <button class="mobile-action-btn theme-toggle-btn" data-theme-switcher aria-label="Toggle Theme">
+          <span class="theme-icon-wrapper">
+            <svg class="theme-icon theme-icon--sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="theme-icon theme-icon--moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+          <span>{lang === 'vi' ? 'Giao diện' : 'Theme'}</span>
+        </button>
+        
+        <div class="mobile-lang-buttons">
+          <button class:list={['mobile-lang-btn', { active: lang === 'vi' }]} data-lang="vi">
+            <span>🇻🇳</span> VI
+          </button>
+          <button class:list={['mobile-lang-btn', { active: lang === 'en' }]} data-lang="en">
+            <span>🇺🇸</span> EN
+          </button>
+        </div>
+      </li>
     </ul>
   </div>
 </header>
@@ -378,6 +401,63 @@ const navLinks = [
     .header.open .mobile-nav {
       display: block;
     }
+
+    .hide-on-mobile {
+      display: none !important;
+    }
+
+    .mobile-nav-item.secondary-actions {
+      padding: var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .mobile-action-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--color-surface-hover);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+    }
+
+    .theme-icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+    }
+
+    .mobile-lang-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-sm);
+    }
+
+    .mobile-lang-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm);
+      background: var(--color-surface-hover);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      transition: all var(--transition-fast);
+    }
+
+    .mobile-lang-btn.active {
+      background: var(--color-primary);
+      color: var(--color-background);
+      border-color: var(--color-primary);
+    }
   }
 
 
@@ -478,8 +558,9 @@ const navLinks = [
     langDropdown?.classList.remove('show');
   });
 
-  // Handle language selection
-  langOptions?.forEach(option => {
+  // Handle language selection for both desktop and mobile
+  const allLangOptions = document.querySelectorAll('[data-lang]');
+  allLangOptions.forEach(option => {
     option.addEventListener('click', (e) => {
       e.stopPropagation();
       const lang = (option as HTMLElement).dataset.lang;
@@ -493,10 +574,11 @@ const navLinks = [
     });
   });
 
-  // Theme switcher
-  const themeBtn = document.querySelector('[data-theme-switcher]');
-  
-  themeBtn?.addEventListener('click', () => {
-    toggleTheme();
+  // Theme switcher for both desktop and mobile
+  const themeBtns = document.querySelectorAll('[data-theme-switcher]');
+  themeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleTheme();
+    });
   });
 </script>
