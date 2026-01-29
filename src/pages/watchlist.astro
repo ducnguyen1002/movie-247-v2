@@ -215,12 +215,31 @@ const { translations, lang } = useTranslations(langCookie?.value);
         <div class="movie-card" data-slug="${item.slug}">
           <a href="/movies/${item.slug}" class="movie-card__poster">
             <img src="${getImageUrl(item.poster_url)}" alt="${displayTitle}" loading="lazy"/>
-            <div class="movie-card__overlay">
-              <div class="play-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
+            
+            <!-- Hover Popup -->
+            <div class="movie-card__popup">
+              <div class="popup-content">
+                <h4 class="popup-title">${displayTitle}</h4>
+                <div class="popup-meta">
+                   ${item.year ? `<span class="popup-year">${item.year}</span>` : ''}
+                   ${isHistory && item.duration ? `<span class="popup-duration">${item.duration}</span>` : ''}
+                </div>
+                ${item.overview ? `<p class="popup-desc">${item.overview}</p>` : ''}
+                
+                <div class="popup-actions">
+                  <button class="popup-btn play-btn-small">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Xem ngay
+                  </button>
+                  <!-- No watchlist button here as per request -->
+                </div>
               </div>
+            </div>
+
+            <div class="movie-card__overlay">
+               <!-- Basic overlay content if needed, but popup takes precedence on hover -->
             </div>
             ${isHistory && item.duration ? `<div class="duration-badge">${item.duration}</div>` : ''}
           </a>
@@ -364,10 +383,101 @@ const { translations, lang } = useTranslations(langCookie?.value);
     color: var(--color-text-muted);
   }
 
+  /* New Popup Styles */
+  .watchlist-grid .movie-card__popup {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,0.2) 100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: var(--spacing-sm);
+    z-index: 10;
+  }
+
+  .watchlist-grid .movie-card:hover .movie-card__popup {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .watchlist-grid .popup-content {
+      transform: translateY(10px);
+      transition: transform var(--transition-normal);
+      width: 100%;
+  }
+  
+  .watchlist-grid .movie-card:hover .popup-content {
+      transform: translateY(0);
+  }
+
+  .watchlist-grid .popup-title {
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    color: white;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+
+  .watchlist-grid .popup-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+    align-items: center;
+  }
+
+  .watchlist-grid .popup-desc {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .watchlist-grid .popup-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .watchlist-grid .popup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: var(--radius-full);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+  }
+
+  .watchlist-grid .play-btn-small {
+    flex: 1;
+    background: white;
+    color: black;
+    padding: 6px 12px;
+  }
+  
+  .watchlist-grid .play-btn-small:hover {
+    background: var(--color-primary);
+    color: white;
+  }
+
   .watchlist-grid .remove-btn {
     padding: 4px;
     color: var(--color-text-muted);
     transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    cursor: pointer;
   }
 
   .watchlist-grid .remove-btn:hover {

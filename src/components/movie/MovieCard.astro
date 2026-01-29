@@ -8,9 +8,10 @@ interface Props {
   poster: string;
   genres?: string[];
   duration?: string;
+  description?: string;
 }
 
-const { id, title, titleVi, year, rating, poster, genres = [], duration } = Astro.props;
+const { id, title, titleVi, year, rating, poster, genres = [], duration, description } = Astro.props;
 
 // Get translations
 import { useTranslations } from '../../lib/useTranslations';
@@ -20,52 +21,138 @@ const { translations, lang } = useTranslations(langCookie?.value);
 const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 ---
 
-<a href={`/movies/${id}`} class="movie-card">
-  <div class="movie-card__poster">
-    <img src={poster} alt={displayTitle} class="movie-card__img" loading="lazy"/>
-    <div class="movie-card__overlay">
-      <button class="play-btn" aria-label={translations.player.play}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-      </button>
+<div class="movie-card-wrapper">
+  <a href={`/movies/${id}`} class="movie-card">
+    <div class="movie-card__poster">
+      <img src={poster} alt={displayTitle} class="movie-card__img" loading="lazy"/>
+      
+      <!-- Hover Popup Info -->
+      <div class="movie-card__popup">
+        <div class="popup-content">
+          <h4 class="popup-title">{displayTitle}</h4>
+          <div class="popup-meta">
+            <span class="popup-rating">★ {rating.toFixed(1)}</span>
+            <span class="popup-year">{year}</span>
+            <span class="popup-duration">{duration}</span>
+          </div>
+          {description && (
+            <p class="popup-desc">{description}</p>
+          )}
+          
+          <div class="popup-actions">
+            <button class="popup-btn play-btn-small">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              {translations.common.playNow || 'Xem ngay'}
+            </button>
+            <button 
+              class="popup-btn watchlist-btn"
+              data-movie={JSON.stringify({
+                id,
+                slug: id,
+                name: titleVi || title,
+                origin_name: title,
+                poster_url: poster,
+                year: year
+              })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="movie-card__info">
-    <h3 class="movie-card__title">{displayTitle}</h3>
-    <div class="movie-card__meta">
-      <span class="movie-card__rating">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-        {rating.toFixed(1)}
-      </span>
-      <span class="movie-card__dot">•</span>
-      <span class="movie-card__year">{year}</span>
-      {genres.length > 0 && (
-        <>
-          <span class="movie-card__dot">•</span>
-          <span class="movie-card__genre">{genres[0]}</span>
-        </>
-      )}
+    
+    <div class="movie-card__info">
+      <h3 class="movie-card__title">{displayTitle}</h3>
+      <div class="movie-card__meta">
+        <span class="movie-card__rating">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          {rating.toFixed(1)}
+        </span>
+        <span class="movie-card__dot">•</span>
+        <span class="movie-card__year">{year}</span>
+        {genres.length > 0 && (
+          <>
+            <span class="movie-card__dot">•</span>
+            <span class="movie-card__genre">{genres[0]}</span>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-</a>
+  </a>
+</div>
+
+<script>
+  import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
+
+  document.querySelectorAll('.watchlist-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if ((btn as any)._processing) return;
+      (btn as any)._processing = true;
+
+      const movieData = JSON.parse((btn as HTMLElement).dataset.movie || '{}');
+      const added = toggleWatchlist(movieData);
+      
+      // Visual feedback
+      const svg = btn.querySelector('svg');
+      if (added) {
+        btn.classList.add('active');
+        if (svg) svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+      } else {
+        btn.classList.remove('active');
+        if (svg) svg.innerHTML = '<path d="M12 5v14M5 12h14"/>';
+      }
+      
+      // Toast
+      if (typeof (window as any).showToast === 'function') {
+        const message = added ? 'Đã thêm vào danh sách xem' : 'Đã xóa khỏi danh sách xem'; // Should use translations ideally
+        (window as any).showToast(message, 'success');
+      }
+      
+      setTimeout(() => { (btn as any)._processing = false; }, 300);
+    });
+
+    // Initial state check
+    const movieData = JSON.parse((btn as HTMLElement).dataset.movie || '{}');
+    if (isInWatchlist(movieData.slug)) {
+      btn.classList.add('active');
+      const svg = btn.querySelector('svg');
+      if (svg) svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+    }
+  });
+
+  // Play button click
+  document.querySelectorAll('.play-btn-small').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // Let event bubble to anchor
+    });
+  });
+</script>
 
 <style>
+  .movie-card-wrapper {
+    position: relative;
+  }
+
   .movie-card {
     display: block;
     border-radius: var(--radius-md);
     overflow: hidden;
-    transition: transform var(--transition-normal);
   }
 
-  .movie-card:hover {
-    /* transform removed */
-  }
-
-  .movie-card:hover .movie-card__overlay {
+  .movie-card:hover .movie-card__popup {
     opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .movie-card:hover .movie-card__poster img {
@@ -88,35 +175,110 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     transition: transform var(--transition-slow);
   }
 
-  .movie-card__overlay {
+  /* Popup Overlay */
+  .movie-card__popup {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 60%, rgba(0,0,0,0.4) 100%);
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    visibility: hidden;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: var(--spacing-md);
+    z-index: 10;
   }
 
-  .play-btn {
-    width: 48px;
-    height: 48px;
+  .popup-content {
+    transform: translateY(10px);
+    transition: transform var(--transition-normal);
+  }
+  
+  .movie-card:hover .popup-content {
+    transform: translateY(0);
+  }
+
+  .popup-title {
+    font-size: var(--font-size-md);
+    font-weight: bold;
+    color: white;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+
+  .popup-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  
+  .popup-rating {
+    color: var(--color-rating);
+    font-weight: bold;
+  }
+
+  .popup-desc {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .popup-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .popup-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
+    gap: 4px;
     border-radius: var(--radius-full);
-    color: var(--color-background);
-    transition: transform var(--transition-fast);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
   }
 
-  .play-btn:hover {
-    transform: scale(1.1);
+  .play-btn-small {
+    flex: 1;
+    background: white;
+    color: black;
+    padding: 6px 12px;
+  }
+  
+  .play-btn-small:hover {
+    background: var(--color-primary);
+    color: white;
   }
 
-  .play-btn svg {
-    margin-left: 2px;
+  .watchlist-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  
+  .watchlist-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: white;
+  }
+  
+  .watchlist-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
   }
 
   /* Info */
@@ -164,16 +326,6 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
   @media (max-width: 576px) {
     .movie-card__title {
       font-size: var(--font-size-xs);
-    }
-
-    .play-btn {
-      width: 40px;
-      height: 40px;
-    }
-
-    .play-btn svg {
-      width: 16px;
-      height: 16px;
     }
   }
 </style>

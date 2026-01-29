@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import GSAPInit from '../components/common/GSAPInit.astro';
 import Toast from '../components/common/Toast.astro';
 
 interface Props {
@@ -30,7 +29,6 @@ const {
   <slot />
   
   <!-- GSAP Animations -->
-  <GSAPInit />
   <Toast />
 </body>
 </html>

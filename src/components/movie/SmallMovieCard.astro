@@ -6,9 +6,10 @@ interface Props {
   poster: string;
   year?: number;
   rating?: number;
+  description?: string;
 }
 
-const { id, title, titleVi, poster, year, rating } = Astro.props;
+const { id, title, titleVi, poster, year, rating, description } = Astro.props;
 
 // Get translations
 import { useTranslations } from '../../lib/useTranslations';
@@ -18,37 +19,120 @@ const { translations, lang } = useTranslations(langCookie?.value);
 const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 ---
 
-<a href={`/movies/${id}`} class="small-card">
-  <div class="small-card__poster">
-    <img src={poster} alt={displayTitle} loading="lazy"/>
-    <div class="small-card__overlay">
-      <button class="play-btn" aria-label={translations.player.play}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-  <div class="small-card__info">
-    <h3 class="small-card__title">{displayTitle}</h3>
-    {(rating || year) && (
-      <div class="small-card__meta">
-        {rating && (
-          <span class="small-card__rating">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            {rating.toFixed(1)}
-          </span>
-        )}
-        {rating && year && <span class="small-card__dot">•</span>}
-        {year && <span>{year}</span>}
+<div class="small-card-wrapper">
+  <a href={`/movies/${id}`} class="small-card">
+    <div class="small-card__poster">
+      <img src={poster} alt={displayTitle} loading="lazy"/>
+      
+      <!-- Popup Info -->
+      <div class="small-card__popup">
+        <div class="popup-content">
+          <h4 class="popup-title">{displayTitle}</h4>
+          <div class="popup-meta">
+             {rating && <span class="popup-rating">★ {rating.toFixed(1)}</span>}
+             {year && <span class="popup-year">{year}</span>}
+          </div>
+          
+          <div class="popup-actions">
+            <button class="popup-btn play-btn-small">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </button>
+            <button 
+              class="popup-btn watchlist-btn"
+              data-movie={JSON.stringify({
+                id,
+                slug: id,
+                name: titleVi || title,
+                origin_name: title,
+                poster_url: poster,
+                year: year
+              })}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-    )}
-  </div>
-</a>
+    </div>
+    <div class="small-card__info">
+      <h3 class="small-card__title">{displayTitle}</h3>
+      {(rating || year) && (
+        <div class="small-card__meta">
+          {rating && (
+            <span class="small-card__rating">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              {rating.toFixed(1)}
+            </span>
+          )}
+          {rating && year && <span class="small-card__dot">•</span>}
+          {year && <span>{year}</span>}
+        </div>
+      )}
+    </div>
+  </a>
+</div>
+
+<script>
+  import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
+
+  document.querySelectorAll('.watchlist-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if ((btn as any)._processing) return;
+      (btn as any)._processing = true;
+
+      const movieData = JSON.parse((btn as HTMLElement).dataset.movie || '{}');
+      const added = toggleWatchlist(movieData);
+      
+      // Visual feedback
+      const svg = btn.querySelector('svg');
+      if (added) {
+        btn.classList.add('active');
+        if (svg) svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+      } else {
+        btn.classList.remove('active');
+        if (svg) svg.innerHTML = '<path d="M12 5v14M5 12h14"/>';
+      }
+      
+      // Toast
+      if (typeof (window as any).showToast === 'function') {
+        const message = added ? 'Đã thêm vào danh sách xem' : 'Đã xóa khỏi danh sách xem';
+        (window as any).showToast(message, 'success');
+      }
+      
+      setTimeout(() => { (btn as any)._processing = false; }, 300);
+    });
+
+    // Initial state check
+    const movieData = JSON.parse((btn as HTMLElement).dataset.movie || '{}');
+    if (isInWatchlist(movieData.slug)) {
+      btn.classList.add('active');
+      const svg = btn.querySelector('svg');
+      if (svg) svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+    }
+  });
+  
+  // Prevent default for play button to let link click happen
+  document.querySelectorAll('.play-btn-small').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+           // allow bubble
+      });
+  });
+</script>
 
 <style>
+  .small-card-wrapper {
+    position: relative;
+  }
+
   .small-card {
     display: block;
     transition: transform var(--transition-normal);
@@ -59,8 +143,14 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     /* transform removed */
   }
 
-  .small-card:hover .small-card__overlay {
+  /* Reveal popup on hover */
+  .small-card:hover .small-card__popup {
     opacity: 1;
+    visibility: visible;
+  }
+  
+  .small-card:hover .popup-content {
+      transform: translateY(0);
   }
 
   .small-card:hover img {
@@ -83,31 +173,93 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     transition: transform var(--transition-slow);
   }
 
-  .small-card__overlay {
+  /* Popup Overlay */
+  .small-card__popup {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.2) 100%);
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    visibility: hidden;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: var(--spacing-sm);
+    z-index: 10;
+  }
+  
+  .popup-content {
+      transform: translateY(10px);
+      transition: transform var(--transition-normal);
   }
 
-  .play-btn {
-    width: 36px;
-    height: 36px;
+  .popup-title {
+    font-size: var(--font-size-xs);
+    font-weight: bold;
+    color: white;
+    margin-bottom: 2px;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .popup-meta {
+    display: flex;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  
+  .popup-rating {
+    color: var(--color-rating);
+    font-weight: bold;
+  }
+
+  .popup-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .popup-btn {
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
     border-radius: var(--radius-full);
-    color: var(--color-background);
-    transition: transform var(--transition-fast);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
   }
 
-  .play-btn:hover {
-    transform: scale(1.1);
+  .play-btn-small {
+    background: white;
+    color: black;
+  }
+  
+  .play-btn-small:hover {
+      background: var(--color-primary);
+      color: white;
+  }
+
+  .watchlist-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  
+  .watchlist-btn:hover {
+      background: rgba(255,255,255,0.3);
+      border-color: white;
+  }
+  
+  .watchlist-btn.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
   }
 
   /* Info */

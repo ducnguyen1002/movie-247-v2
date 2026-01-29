@@ -54,6 +54,7 @@ const { translations } = useTranslations(langCookie?.value);
             poster={getImageUrl(movie.poster_url)}
             year={movie.year}
             rating={8.0 + Math.random() * 1.5}
+            description={movie.content || ''}
           />
         ))
       }

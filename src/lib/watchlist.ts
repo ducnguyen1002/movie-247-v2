@@ -6,6 +6,7 @@ export interface WatchlistItem {
 	poster_url: string;
 	thumb_url?: string;
 	year?: number;
+	overview?: string;
 	addedAt: number;
 }
 
