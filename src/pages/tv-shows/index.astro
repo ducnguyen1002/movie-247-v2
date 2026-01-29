@@ -5,6 +5,10 @@ import Footer from '../../components/layout/Footer.astro';
 import MovieCard from '../../components/movie/MovieCard.astro';
 import { getMoviesByCategory, getMoviesByGenre, getMoviesByNation, getImageUrl } from '../../lib/movieService';
 import { MOVIE_GENRES, MOVIE_NATIONS } from '../../lib/constants';
+import { useTranslations, getGenreName, getNationName, getCategoryName } from '../../lib/useTranslations';
+
+const langCookie = Astro.cookies.get('language');
+const { translations, lang, t } = useTranslations(langCookie?.value);
 
 const url = Astro.url;
 const genreParam = url.searchParams.get('genre');
@@ -29,11 +33,6 @@ if (genreParam) {
 
 const movies = moviesData?.data?.items || [];
 const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
-
-// Get translations
-import { useTranslations, getGenreName, getNationName, getCategoryName } from '../../lib/useTranslations';
-const langCookie = Astro.cookies.get('language');
-const { translations, lang, t } = useTranslations(langCookie?.value);
 
 // Update pageTitle for i18n
 if (genreParam) {

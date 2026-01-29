@@ -4,6 +4,10 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import MovieCard from '../components/movie/MovieCard.astro';
 import { searchMoviesByKeyword, getImageUrl } from '../lib/movieService';
+import { useTranslations, formatTranslation } from '../lib/useTranslations';
+
+const langCookie = Astro.cookies.get('language');
+const { t, translations } = useTranslations(langCookie?.value);
 
 const url = Astro.url;
 const keyword = url.searchParams.get('q') || '';
@@ -16,12 +20,6 @@ if (keyword) {
 
 const movies = searchResults?.data?.items || [];
 const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
-
-// Get translations
-import { useTranslations } from '../lib/useTranslations';
-import { formatTranslation } from '../lib/useTranslations';
-const langCookie = Astro.cookies.get('language');
-const { t, translations } = useTranslations(langCookie?.value);
 ---
 
 <BaseLayout title={keyword ? `${translations.search.title}: ${keyword} - Movie247` : `${translations.search.title} - Movie247`}>

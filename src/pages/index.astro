@@ -11,6 +11,11 @@ import GenreExplorer from '../components/movie/GenreExplorer.astro';
 import StreamingLogos from '../components/movie/StreamingLogos.astro';
 import { getNewUpdatedMovies, getMoviesByCategory, getImageUrl, type Movie } from '../lib/movieService';
 import { MOVIE_GENRES } from '../lib/constants';
+import { useTranslations } from '../lib/useTranslations';
+
+// Get translations
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
 
 // Fetch data from API
 const newMoviesRes = await getNewUpdatedMovies(1) as any;
@@ -25,6 +30,8 @@ const singleMovies = singleMoviesRes?.data?.items || [];
 const seriesMovies = seriesMoviesRes?.data?.items || [];
 const animationMovies = animationRes?.data?.items || [];
 const tvShows = tvShowsRes?.data?.items || [];
+
+
 
 // Prepare slides for HeroSlider (first 5 movies)
 const heroSlides = newMovies.slice(0, 5).map((movie: any, index: number) => ({
@@ -52,11 +59,6 @@ const genresWithMovies = MOVIE_GENRES.slice(0, 8).map((genre, index) => {
     movies: genreMovies.length > 0 ? genreMovies : allMoviesPool.slice(0, 5),
   };
 });
-
-// Get translations
-import { useTranslations } from '../lib/useTranslations';
-const langCookie = Astro.cookies.get('language');
-const { translations, lang } = useTranslations(langCookie?.value);
 ---
 
 <BaseLayout title={lang === 'vi' ? "Movie247 - Xem Phim Online Chất Lượng Cao" : "Movie247 - Watch High Quality Movies Online"}>
