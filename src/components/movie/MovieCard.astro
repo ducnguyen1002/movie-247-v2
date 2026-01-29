@@ -11,14 +11,20 @@ interface Props {
 }
 
 const { id, title, titleVi, year, rating, poster, genres = [], duration } = Astro.props;
-const displayTitle = titleVi || title;
+
+// Get translations
+import { useTranslations } from '../../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
+
+const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 ---
 
 <a href={`/movies/${id}`} class="movie-card">
   <div class="movie-card__poster">
     <img src={poster} alt={displayTitle} class="movie-card__img" loading="lazy"/>
     <div class="movie-card__overlay">
-      <button class="play-btn" aria-label="Xem phim">
+      <button class="play-btn" aria-label={translations.player.play}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>

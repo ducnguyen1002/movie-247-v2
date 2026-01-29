@@ -1,6 +1,6 @@
 ---
 import { getImageUrl } from '../../lib/movieService';
-import { useTranslations } from '../../lib/useTranslations';
+import { useTranslations, getGenreName } from '../../lib/useTranslations';
 
 interface Movie {
   slug: string;
@@ -25,7 +25,7 @@ interface Props {
 
 // Get translations
 const langCookie = Astro.cookies.get('language');
-const { t, translations } = useTranslations(langCookie?.value);
+const { t, translations, lang } = useTranslations(langCookie?.value);
 
 const { title = translations.hero.exploreByGenre, genresWithMovies } = Astro.props;
 
@@ -33,7 +33,7 @@ const { title = translations.hero.exploreByGenre, genresWithMovies } = Astro.pro
 const genreData = genresWithMovies.map((genre, index) => {
   const firstMovie = genre.movies[0];
   return {
-    name: genre.name,
+    name: getGenreName(genre.slug, lang),
     slug: genre.slug,
     image: firstMovie ? getImageUrl(firstMovie.thumb_url || firstMovie.poster_url) : '',
     movie: firstMovie,
@@ -90,8 +90,7 @@ const featuredMovie = featuredGenre?.movie;
                     </svg>
                     {(4 + Math.random() * 1).toFixed(1)}
                   </span>
-                  <span class="genre-hero__divider">|</span>
-                  <span>{genre.movie.time || "2h30m"}</span>
+                  <span>{genre.movie.time || (lang === 'vi' ? "Cập nhật" : "Updating")}</span>
                   <span class="genre-hero__dot">•</span>
                   <span>{genre.movie.year || 2024}</span>
                   <span class="genre-hero__dot">•</span>

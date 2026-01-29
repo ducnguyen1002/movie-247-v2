@@ -32,6 +32,23 @@ if (genreParam) {
 
 const movies = moviesData?.data?.items || [];
 const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
+
+// Get translations
+import { useTranslations, getGenreName, getNationName, getCategoryName } from '../../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang, t } = useTranslations(langCookie?.value);
+
+// Update pageTitle for i18n
+if (genreParam) {
+  const genre = MOVIE_GENRES.find(g => g.slug === genreParam);
+  pageTitle = genre ? `${translations.movie.genre}: ${getGenreName(genre.slug, lang)}` : translations.genres.title;
+} else if (nationParam) {
+  const nation = MOVIE_NATIONS.find(n => n.slug === nationParam);
+  pageTitle = nation ? `${translations.movie.country}: ${getNationName(nation.slug, lang)}` : translations.movie.country;
+} else {
+  const category = MOVIE_CATEGORIES.find(c => c.slug === categoryParam);
+  pageTitle = category ? getCategoryName(category.slug, lang) : translations.nav.movies;
+}
 ---
 
 <BaseLayout title={`${pageTitle} - Movie247`}>
@@ -42,45 +59,45 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
       <!-- Page Header -->
       <div class="page-header">
         <h1>{pageTitle}</h1>
-        <p>Tổng cộng {pagination.totalItems || movies.length} phim</p>
+        <p>{translations.common.of} {pagination.totalItems || movies.length} {translations.nav.movies.toLowerCase()}</p>
       </div>
 
       <!-- Filters -->
       <div class="filters">
         <!-- Category Filter -->
         <div class="filter-section">
-          <label>Loại:</label>
+          <label>{translations.movie.status}:</label>
           <div class="filter-pills">
             <a href="/movies?category=phim-le" class:list={["filter-pill", { active: categoryParam === 'phim-le' && !genreParam && !nationParam }]}>
-              Phim Lẻ
+              {translations.nav.movies}
             </a>
             <a href="/tv-shows" class="filter-pill">
-              Phim Bộ
+              {translations.nav.tvShows}
             </a>
             <a href="/movies?category=hoat-hinh" class:list={["filter-pill", { active: categoryParam === 'hoat-hinh' }]}>
-              Hoạt Hình
+              {translations.nav.animation}
             </a>
           </div>
         </div>
 
         <!-- Genre Filter -->
         <div class="filter-section">
-          <label>Thể loại:</label>
+          <label>{translations.movie.genre}:</label>
           <select id="genre-select" class="filter-select">
-            <option value="">Tất cả</option>
+            <option value="">{translations.search.sortBy}</option>
             {MOVIE_GENRES.map(genre => (
-              <option value={genre.slug} selected={genreParam === genre.slug}>{genre.name}</option>
+              <option value={genre.slug} selected={genreParam === genre.slug}>{getGenreName(genre.slug, lang)}</option>
             ))}
           </select>
         </div>
 
         <!-- Nation Filter -->
         <div class="filter-section">
-          <label>Quốc gia:</label>
+          <label>{translations.movie.country}:</label>
           <select id="nation-select" class="filter-select">
-            <option value="">Tất cả</option>
+            <option value="">{translations.search.sortBy}</option>
             {MOVIE_NATIONS.map(nation => (
-              <option value={nation.slug} selected={nationParam === nation.slug}>{nation.name}</option>
+              <option value={nation.slug} selected={nationParam === nation.slug}>{getNationName(nation.slug, lang)}</option>
             ))}
           </select>
         </div>
@@ -89,10 +106,10 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
       <!-- Active Filters -->
       {(genreParam || nationParam) && (
         <div class="active-filters">
-          <span>Đang lọc:</span>
+          <span>{translations.nav.search}:</span>
           {genreParam && (
             <a href={`/movies${nationParam ? `?nation=${nationParam}` : ''}`} class="filter-tag">
-              {MOVIE_GENRES.find(g => g.slug === genreParam)?.name}
+              {getGenreName(genreParam, lang)}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
@@ -100,13 +117,13 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
           )}
           {nationParam && (
             <a href={`/movies${genreParam ? `?genre=${genreParam}` : ''}`} class="filter-tag">
-              {MOVIE_NATIONS.find(n => n.slug === nationParam)?.name}
+              {getNationName(nationParam, lang)}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
             </a>
           )}
-          <a href="/movies" class="clear-all">Xóa tất cả</a>
+          <a href="/movies" class="clear-all">{translations.common.noResults}</a>
         </div>
       )}
 
@@ -128,8 +145,8 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
         </div>
       ) : (
         <div class="empty-state">
-          <p>Không tìm thấy phim nào.</p>
-          <a href="/movies" class="btn btn-primary">Xem tất cả phim</a>
+          <p>{translations.messages.noMoviesFound}</p>
+          <a href="/movies" class="btn btn-primary">{translations.common.viewAll}</a>
         </div>
       )}
 
@@ -143,11 +160,11 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
               ...(nationParam && { nation: nationParam }),
               page: String(pageParam - 1)
             }).toString()}`} class="pagination-btn">
-              ← Trước
+              ← {translations.common.previous}
             </a>
           )}
           
-          <span class="pagination-info">Trang {pageParam} / {pagination.totalPages}</span>
+          <span class="pagination-info">{translations.common.page} {pageParam} / {pagination.totalPages}</span>
           
           {pageParam < pagination.totalPages && (
             <a href={`/movies?${new URLSearchParams({
@@ -156,7 +173,7 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
               ...(nationParam && { nation: nationParam }),
               page: String(pageParam + 1)
             }).toString()}`} class="pagination-btn">
-              Sau →
+              {translations.common.next} →
             </a>
           )}
         </div>

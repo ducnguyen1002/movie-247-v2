@@ -50,7 +50,8 @@ const { translations } = useTranslations(langCookie?.value);
           <RankingCard
             id={movie.slug}
             rank={index + 1}
-            title={movie.name}
+            title={movie.origin_name || movie.name}
+            titleVi={movie.name}
             poster={getImageUrl(movie.poster_url)}
             rating={8.0 + Math.random() * 1.5}
             year={movie.year || 2024}

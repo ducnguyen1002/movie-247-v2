@@ -34,9 +34,9 @@ const heroSlides = newMovies.slice(0, 5).map((movie: any, index: number) => ({
   rating: 8.0 + Math.random() * 1.5,
   duration: movie.time || "2h 30m",
   genres: movie.category?.slice(0, 2).map((c: any) => c.name) || [],
-  synopsis: movie.content || "Khám phá bộ phim hấp dẫn này với những tình tiết gay cấn và diễn xuất xuất sắc.",
+  synopsis: movie.content || (lang === 'vi' ? "Khám phá bộ phim hấp dẫn này với những tình tiết gay cấn và diễn xuất xuất sắc." : "Explore this exciting movie with thrilling scenes and outstanding performances."),
   backdrop: getImageUrl(movie.thumb_url || movie.poster_url),
-  season: index === 0 ? "Season 3" : undefined,
+  season: index === 0 ? (lang === 'vi' ? "Mùa 3" : "Season 3") : undefined,
 }));
 
 // Prepare genres with movies for GenreExplorer
@@ -59,7 +59,7 @@ const langCookie = Astro.cookies.get('language');
 const { translations, lang } = useTranslations(langCookie?.value);
 ---
 
-<BaseLayout title="Movie247 - Xem Phim Online Chất Lượng Cao">
+<BaseLayout title={lang === 'vi' ? "Movie247 - Xem Phim Online Chất Lượng Cao" : "Movie247 - Watch High Quality Movies Online"}>
   <Header isTransparent={true} />
   
   <main>

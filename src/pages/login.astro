@@ -1,9 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations } = useTranslations(langCookie?.value);
 ---
 
-<BaseLayout title="Đăng Nhập - Movie247">
+<BaseLayout title={`${translations.auth.login} - Movie247`}>
   <Header />
   
   <main class="auth-page">
@@ -13,31 +18,31 @@ import Header from '../components/layout/Header.astro';
           <a href="/" class="auth-logo">
             <span class="logo-text">Movie247</span>
           </a>
-          <h1>Đăng Nhập</h1>
+          <h1>{translations.auth.login}</h1>
         </div>
 
         <form class="auth-form" id="login-form">
           <div class="form-group">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label">{translations.auth.email}</label>
             <input 
               type="email" 
               id="email" 
               name="email" 
               class="form-input" 
-              placeholder="Nhập email của bạn"
+              placeholder={translations.auth.email}
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="password" class="form-label">Mật khẩu</label>
+            <label for="password" class="form-label">{translations.auth.password}</label>
             <div class="password-input">
               <input 
                 type="password" 
                 id="password" 
                 name="password" 
                 class="form-input" 
-                placeholder="Nhập mật khẩu"
+                placeholder={translations.auth.password}
                 required
               />
               <button type="button" class="password-toggle" aria-label="Hiển thị mật khẩu">
@@ -52,13 +57,13 @@ import Header from '../components/layout/Header.astro';
           <div class="form-options">
             <label class="checkbox-label">
               <input type="checkbox" name="remember" />
-              <span>Ghi nhớ đăng nhập</span>
+              <span>{translations.auth.settings}</span>
             </label>
-            <a href="/forgot-password" class="forgot-link">Quên mật khẩu?</a>
+            <a href="/forgot-password" class="forgot-link">{translations.auth.forgotPassword}</a>
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg btn-full">
-            Đăng Nhập
+            {translations.auth.loginButton}
           </button>
         </form>
 
@@ -85,7 +90,7 @@ import Header from '../components/layout/Header.astro';
         </div>
 
         <div class="auth-footer">
-          <p>Chưa có tài khoản? <a href="/register">Đăng ký</a></p>
+          <p>{translations.auth.noAccount} <a href="/register">{translations.auth.register}</a></p>
         </div>
       </div>
     </div>
@@ -278,7 +283,7 @@ import Header from '../components/layout/Header.astro';
   const loginForm = document.getElementById('login-form');
   loginForm?.addEventListener('submit', (e) => {
     e.preventDefault();
-    alert('Đăng nhập thành công! (Demo)');
+    alert('OK');
     window.location.href = '/';
   });
 </script>

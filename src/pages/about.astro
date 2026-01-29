@@ -2,9 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations } = useTranslations(langCookie?.value);
 ---
 
-<BaseLayout title="Về Chúng Tôi - Movie247">
+<BaseLayout title={`${translations.nav.about} - Movie247`}>
   <Header />
   
   <main class="page-content">
@@ -12,23 +17,21 @@ import Footer from '../components/layout/Footer.astro';
       <div class="about-wrapper">
         <!-- Hero Section -->
         <section class="about-hero">
-          <h1>Về Movie247</h1>
-          <p class="subtitle">Nền tảng xem phim trực tuyến hàng đầu Việt Nam</p>
+          <h1>{translations.about.title}</h1>
+          <p class="subtitle">{translations.about.subtitle}</p>
         </section>
 
         <!-- Mission -->
         <section class="about-section">
-          <h2>Sứ Mệnh Của Chúng Tôi</h2>
+          <h2>{translations.about.mission}</h2>
           <p>
-            Movie247 được thành lập với mục tiêu mang đến cho người dùng Việt Nam 
-            trải nghiệm xem phim trực tuyến tốt nhất. Chúng tôi tin rằng mọi người 
-            đều xứng đáng được tiếp cận với nội dung giải trí chất lượng cao.
+            {translations.about.missionText}
           </p>
         </section>
 
         <!-- Features -->
         <section class="about-section">
-          <h2>Tính Năng Nổi Bật</h2>
+          <h2>{translations.about.features}</h2>
           <div class="features-grid">
             <div class="feature-card">
               <div class="feature-icon">🎬</div>
@@ -78,7 +81,7 @@ import Footer from '../components/layout/Footer.astro';
 
         <!-- Contact -->
         <section class="about-section">
-          <h2>Liên Hệ</h2>
+          <h2>{translations.about.contact}</h2>
           <p>Mọi thắc mắc xin vui lòng liên hệ:</p>
           <ul class="contact-list">
             <li>📧 Email: support@saintstream.com</li>

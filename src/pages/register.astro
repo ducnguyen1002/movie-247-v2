@@ -1,9 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations } = useTranslations(langCookie?.value);
 ---
 
-<BaseLayout title="Đăng Ký - Movie247">
+<BaseLayout title={`${translations.auth.register} - Movie247`}>
   <Header />
   
   <main class="auth-page">
@@ -13,55 +18,55 @@ import Header from '../components/layout/Header.astro';
           <a href="/" class="auth-logo">
             <span class="logo-text">Movie247</span>
           </a>
-          <h1>Đăng Ký</h1>
+          <h1>{translations.auth.register}</h1>
         </div>
 
         <form class="auth-form" id="register-form">
           <div class="form-group">
-            <label for="fullname" class="form-label">Họ và tên</label>
+            <label for="fullname" class="form-label">{translations.auth.profile}</label>
             <input 
               type="text" 
               id="fullname" 
               name="fullname" 
               class="form-input" 
-              placeholder="Nhập họ và tên"
+              placeholder={translations.auth.profile}
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label">{translations.auth.email}</label>
             <input 
               type="email" 
               id="email" 
               name="email" 
               class="form-input" 
-              placeholder="Nhập email của bạn"
+              placeholder={translations.auth.email}
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="password" class="form-label">Mật khẩu</label>
+            <label for="password" class="form-label">{translations.auth.password}</label>
             <input 
               type="password" 
               id="password" 
               name="password" 
               class="form-input" 
-              placeholder="Tạo mật khẩu (tối thiểu 8 ký tự)"
+              placeholder={translations.auth.password}
               minlength="8"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="confirm-password" class="form-label">Xác nhận mật khẩu</label>
+            <label for="confirm-password" class="form-label">{translations.auth.confirmPassword}</label>
             <input 
               type="password" 
               id="confirm-password" 
               name="confirmPassword" 
               class="form-input" 
-              placeholder="Nhập lại mật khẩu"
+              placeholder={translations.auth.confirmPassword}
               required
             />
           </div>
@@ -74,7 +79,7 @@ import Header from '../components/layout/Header.astro';
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg btn-full">
-            Đăng Ký
+            {translations.auth.registerButton}
           </button>
         </form>
 
@@ -101,7 +106,7 @@ import Header from '../components/layout/Header.astro';
         </div>
 
         <div class="auth-footer">
-          <p>Đã có tài khoản? <a href="/login">Đăng nhập</a></p>
+          <p>{translations.auth.hasAccount} <a href="/login">{translations.auth.login}</a></p>
         </div>
       </div>
     </div>
@@ -266,11 +271,11 @@ import Header from '../components/layout/Header.astro';
     const confirmPassword = (document.getElementById('confirm-password') as HTMLInputElement)?.value;
     
     if (password !== confirmPassword) {
-      alert('Mật khẩu xác nhận không khớp!');
+      alert('Error');
       return;
     }
     
-    alert('Đăng ký thành công! (Demo)');
+    alert('OK');
     window.location.href = '/login';
   });
 </script>

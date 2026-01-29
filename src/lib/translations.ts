@@ -50,7 +50,7 @@ const vi: Translations = {
 	search: {
 		placeholder: "Tìm kiếm phim...",
 		title: "Tìm Kiếm Phim",
-		resultsFor: "Kết quả tìm kiếm cho",
+		resultsFor: 'Tìm thấy {count} kết quả cho "{keyword}"',
 		noResults: "Không tìm thấy phim nào",
 		filterByGenre: "Lọc theo thể loại",
 		filterByYear: "Lọc theo năm",
@@ -228,7 +228,7 @@ const en: Translations = {
 	search: {
 		placeholder: "Search movies...",
 		title: "Search Movies",
-		resultsFor: "Search results for",
+		resultsFor: 'Found {count} results for "{keyword}"',
 		noResults: "No movies found",
 		filterByGenre: "Filter by genre",
 		filterByYear: "Filter by year",

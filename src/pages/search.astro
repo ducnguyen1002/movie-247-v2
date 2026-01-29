@@ -16,16 +16,22 @@ if (keyword) {
 
 const movies = searchResults?.data?.items || [];
 const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 };
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+import { formatTranslation } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { t, translations } = useTranslations(langCookie?.value);
 ---
 
-<BaseLayout title={keyword ? `Tìm kiếm: ${keyword} - Movie247` : 'Tìm Kiếm Phim - Movie247'}>
+<BaseLayout title={keyword ? `${translations.search.title}: ${keyword} - Movie247` : `${translations.search.title} - Movie247`}>
   <Header />
   
   <main class="page-content">
     <div class="container">
       <!-- Search Header -->
       <div class="search-header">
-        <h1>Tìm Kiếm Phim</h1>
+        <h1>{translations.search.title}</h1>
         
         <!-- Search Form -->
         <form class="search-form" action="/search" method="get">
@@ -37,11 +43,11 @@ const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, 
               type="text" 
               name="q" 
               value={keyword}
-              placeholder="Nhập tên phim, diễn viên..."
+              placeholder={translations.search.placeholder}
               class="search-input"
               autofocus
             />
-            <button type="submit" class="search-btn">Tìm kiếm</button>
+            <button type="submit" class="search-btn">{translations.nav.search}</button>
           </div>
         </form>
       </div>
@@ -50,7 +56,7 @@ const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, 
       {keyword ? (
         <>
           <div class="results-info">
-            <span>Tìm thấy {pagination.totalItems || movies.length} kết quả cho "{keyword}"</span>
+            <span>{formatTranslation(translations.search.resultsFor, { count: pagination.totalItems || movies.length, keyword })}</span>
           </div>
 
           {movies.length > 0 ? (
@@ -71,8 +77,8 @@ const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, 
           ) : (
             <div class="empty-state">
               <div class="empty-icon">🔍</div>
-              <h3>Không tìm thấy kết quả</h3>
-              <p>Thử tìm kiếm với từ khóa khác</p>
+              <h3>{translations.search.noResults}</h3>
+              <p>{translations.messages.noMoviesFound}</p>
             </div>
           )}
 
@@ -81,15 +87,15 @@ const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, 
             <div class="pagination">
               {pageParam > 1 && (
                 <a href={`/search?q=${encodeURIComponent(keyword)}&page=${pageParam - 1}`} class="pagination-btn">
-                  ← Trước
+                  ← {translations.common.previous}
                 </a>
               )}
               
-              <span class="pagination-info">Trang {pageParam} / {pagination.totalPages}</span>
+              <span class="pagination-info">{translations.common.page} {pageParam} / {pagination.totalPages}</span>
               
               {pageParam < pagination.totalPages && (
                 <a href={`/search?q=${encodeURIComponent(keyword)}&page=${pageParam + 1}`} class="pagination-btn">
-                  Sau →
+                  {translations.common.next} →
                 </a>
               )}
             </div>
@@ -98,8 +104,8 @@ const pagination = searchResults?.data?.params?.pagination || { currentPage: 1, 
       ) : (
         <div class="empty-state initial">
           <div class="empty-icon">🎬</div>
-          <h3>Tìm kiếm phim yêu thích</h3>
-          <p>Nhập tên phim, diễn viên hoặc đạo diễn để tìm kiếm</p>
+          <h3>{translations.search.title}</h3>
+          <p>{translations.search.placeholder}</p>
         </div>
       )}
     </div>

@@ -1,0 +1,262 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
+---
+
+<BaseLayout title={`${translations.categories.yourWatchlist} - Movie247`}>
+  <Header />
+  
+  <main class="watchlist-page">
+    <div class="container">
+      <div class="page-header">
+        <h1>{translations.categories.yourWatchlist}</h1>
+        <p class="count-text" id="watchlist-count"></p>
+      </div>
+
+      <div class="watchlist-empty" id="watchlist-empty" style="display: none;">
+        <div class="empty-icon">📁</div>
+        <h3>{translations.messages.noMoviesFound}</h3>
+        <p>{translations.messages.tryAgain}</p>
+        <a href="/movies" class="btn btn-primary">{translations.common.viewAll}</a>
+      </div>
+
+      <div class="watchlist-grid" id="watchlist-grid">
+        <!-- Rendered client-side -->
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .watchlist-page {
+    padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    min-height: 100vh;
+    padding-bottom: var(--spacing-3xl);
+  }
+
+  .page-header {
+    margin-bottom: var(--spacing-2xl);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-md);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .page-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .count-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  /* Grid */
+  .watchlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  /* Empty State */
+  .watchlist-empty {
+    text-align: center;
+    padding: var(--spacing-3xl) 0;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+  }
+
+  .watchlist-empty h3 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .watchlist-empty p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  @media (max-width: 768px) {
+    .watchlist-grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--spacing-md);
+    }
+  }
+</style>
+
+<script>
+  import { getWatchlist, removeFromWatchlist } from '../lib/watchlist';
+  import { useTranslations } from '../lib/useTranslations';
+  import { getImageUrl } from '../lib/movieService';
+
+  const lang = document.documentElement.lang || 'vi';
+  const { translations } = useTranslations(lang);
+
+  const grid = document.getElementById('watchlist-grid');
+  const emptyState = document.getElementById('watchlist-empty');
+  const countText = document.getElementById('watchlist-count');
+
+  function renderWatchlist() {
+    if (!grid || !emptyState || !countText) return;
+
+    const items = getWatchlist();
+    
+    if (items.length === 0) {
+      grid.style.display = 'none';
+      emptyState.style.display = 'block';
+      countText.textContent = '';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+    countText.textContent = `${items.length} ${translations.nav.movies.toLowerCase()}`;
+
+    grid.innerHTML = items.map(item => {
+      const displayTitle = lang === 'vi' ? item.name : (item.origin_name || item.name);
+      return `
+        <div class="movie-card" data-slug="${item.slug}">
+          <a href="/movies/${item.slug}" class="movie-card__poster">
+            <img src="${getImageUrl(item.poster_url)}" alt="${displayTitle}" loading="lazy"/>
+            <div class="movie-card__overlay">
+              <div class="play-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+            </div>
+          </a>
+          <div class="movie-card__info">
+            <h3 class="movie-card__title">${displayTitle}</h3>
+            <div class="movie-card__meta">
+              <span>${item.year || ''}</span>
+              <button class="remove-btn" data-slug="${item.slug}" title="${translations.common.removeWatchlist}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach remove handlers
+    grid.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const slug = (btn as HTMLElement).dataset.slug;
+        if (slug) {
+          removeFromWatchlist(slug);
+          renderWatchlist();
+        }
+      });
+    });
+  }
+
+  // Initial render
+  renderWatchlist();
+
+  // Listen for updates from other tabs/windows
+  window.addEventListener('watchlist-updated', renderWatchlist);
+</script>
+
+<style is:global>
+  /* Reuse MovieCard styles but slightly modified for the remove button */
+  .watchlist-grid .movie-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .watchlist-grid .movie-card__poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .watchlist-grid .movie-card__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .watchlist-grid .movie-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .watchlist-grid .movie-card__poster:hover .movie-card__overlay {
+    opacity: 1;
+  }
+
+  .watchlist-grid .movie-card__poster:hover img {
+    transform: scale(1.05);
+  }
+
+  .watchlist-grid .play-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-background);
+  }
+
+  .watchlist-grid .movie-card__info {
+    padding: var(--spacing-sm) 0;
+  }
+
+  .watchlist-grid .movie-card__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: 4px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .watchlist-grid .movie-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  .watchlist-grid .remove-btn {
+    padding: 4px;
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast);
+  }
+
+  .watchlist-grid .remove-btn:hover {
+    color: #ff4d4d;
+  }
+</style>

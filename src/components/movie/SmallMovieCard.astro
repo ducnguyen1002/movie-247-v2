@@ -2,19 +2,27 @@
 interface Props {
   id: string;
   title: string;
+  titleVi?: string;
   poster: string;
   year?: number;
   rating?: number;
 }
 
-const { id, title, poster, year, rating } = Astro.props;
+const { id, title, titleVi, poster, year, rating } = Astro.props;
+
+// Get translations
+import { useTranslations } from '../../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
+
+const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 ---
 
 <a href={`/movies/${id}`} class="small-card">
   <div class="small-card__poster">
-    <img src={poster} alt={title} loading="lazy"/>
+    <img src={poster} alt={displayTitle} loading="lazy"/>
     <div class="small-card__overlay">
-      <button class="play-btn" aria-label="Xem phim">
+      <button class="play-btn" aria-label={translations.player.play}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
@@ -22,7 +30,7 @@ const { id, title, poster, year, rating } = Astro.props;
     </div>
   </div>
   <div class="small-card__info">
-    <h3 class="small-card__title">{title}</h3>
+    <h3 class="small-card__title">{displayTitle}</h3>
     {(rating || year) && (
       <div class="small-card__meta">
         {rating && (

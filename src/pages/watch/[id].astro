@@ -15,7 +15,7 @@ if (!id) {
 }
 
 // Fetch movie details
-const movieData = await getMovieDetailBySlug(id);
+const movieData = await getMovieDetailBySlug(id) as any;
 const movie = movieData?.movie;
 const episodes = movieData?.episodes || [];
 
@@ -32,14 +32,21 @@ const currentEpisode = episodeSlug
 const videoUrl = currentEpisode?.link_embed || '';
 
 // Fetch related movies
-const relatedRes = await getNewUpdatedMovies(1);
+const relatedRes = await getNewUpdatedMovies(1) as any;
 const relatedMovies = relatedRes?.items?.slice(0, 8) || [];
 
 // Prepare episodes data for client-side
 const episodesJson = JSON.stringify(episodes);
+
+// Get translations
+import { useTranslations } from '../../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
+
+const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.name);
 ---
 
-<BaseLayout title={`Xem ${movie.name} ${currentEpisode?.name || ''} - Movie247`}>
+<BaseLayout title={`Xem ${displayTitle} ${currentEpisode?.name || ''} - Movie247`}>
   <Header />
   
   <main class="watch-page">
@@ -48,7 +55,7 @@ const episodesJson = JSON.stringify(episodes);
       <div class="player-section">
         <VideoPlayer 
           videoUrl={videoUrl} 
-          title={`${movie.name} - ${currentEpisode?.name || 'Full'}`}
+          title={`${displayTitle} - ${currentEpisode?.name || 'Full'}`}
           poster={getImageUrl(movie.poster_url)}
           quality={movie.quality || 'HD'}
           lang={movie.lang || 'Vietsub'}
@@ -57,15 +64,26 @@ const episodesJson = JSON.stringify(episodes);
         <!-- Player Header -->
         <div class="player-header">
           <div class="player-title">
-            <h1>{movie.name}</h1>
+            <h1>{displayTitle}</h1>
             <span class="current-episode">{currentEpisode?.name || 'Full'}</span>
           </div>
           <div class="player-actions">
-            <button class="action-btn" id="bookmark-btn">
+            <button 
+              class="action-btn" 
+              id="bookmark-btn"
+              data-movie={JSON.stringify({
+                id: movie.slug,
+                slug: movie.slug,
+                name: movie.name,
+                origin_name: movie.origin_name,
+                poster_url: movie.poster_url,
+                year: movie.year
+              })}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
-              Lưu
+              <span class="btn-text">{translations.common.addWatchlist}</span>
             </button>
             <button class="action-btn" id="share-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -73,7 +91,7 @@ const episodesJson = JSON.stringify(episodes);
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
               </svg>
-              Chia sẻ
+              {translations.common.share}
             </button>
           </div>
         </div>
@@ -85,7 +103,7 @@ const episodesJson = JSON.stringify(episodes);
           <!-- Server Selection -->
           {episodes.length > 0 && (
             <div class="control-section">
-              <h3>Chọn Server</h3>
+              <h3>{translations.player.selectServer}</h3>
               <div class="server-list" id="server-list">
                 {episodes.map((server: any, index: number) => (
                   <button 
@@ -102,7 +120,7 @@ const episodesJson = JSON.stringify(episodes);
           <!-- Episode List -->
           {serverData.length > 0 && (
             <div class="control-section">
-              <h3>Danh Sách Tập ({serverData.length} tập)</h3>
+              <h3>{translations.movie.episodes} ({serverData.length})</h3>
               <div class="episodes-grid" id="episodes-grid">
                 {serverData.map((ep: any) => (
                   <button 
@@ -120,52 +138,55 @@ const episodesJson = JSON.stringify(episodes);
 
           <!-- Movie Info -->
           <div class="control-section movie-info">
-            <h3>Thông Tin Phim</h3>
+            <h3>{translations.about.quickLinks}</h3>
             <div class="info-grid">
               <div class="info-row">
-                <span class="label">Trạng thái:</span>
+                <span class="label">{translations.movie.status}:</span>
                 <span class="value">{movie.episode_current}</span>
               </div>
               <div class="info-row">
-                <span class="label">Thời lượng:</span>
+                <span class="label">{translations.movie.duration}:</span>
                 <span class="value">{movie.time || 'N/A'}</span>
               </div>
               <div class="info-row">
-                <span class="label">Năm:</span>
+                <span class="label">{translations.movie.year}:</span>
                 <span class="value">{movie.year}</span>
               </div>
               <div class="info-row">
-                <span class="label">Quốc gia:</span>
+                <span class="label">{translations.movie.country}:</span>
                 <span class="value">{movie.country?.map((c: any) => c.name).join(', ') || 'N/A'}</span>
               </div>
               <div class="info-row">
-                <span class="label">Thể loại:</span>
+                <span class="label">{translations.movie.genre}:</span>
                 <span class="value">{movie.category?.map((c: any) => c.name).join(', ') || 'N/A'}</span>
               </div>
               <div class="info-row">
-                <span class="label">Đạo diễn:</span>
-                <span class="value">{movie.director?.join(', ') || 'Đang cập nhật'}</span>
+                <span class="label">{translations.movie.director}:</span>
+                <span class="value">{movie.director?.join(', ') || translations.common.loading}</span>
               </div>
             </div>
             
-            <h4>Nội dung phim</h4>
-            <div class="synopsis" set:html={movie.content || 'Đang cập nhật...'} />
+            <h4>{translations.movie.synopsis}</h4>
+            <div class="synopsis" set:html={movie.content || translations.common.loading} />
           </div>
         </div>
 
         <!-- Sidebar -->
         <aside class="sidebar">
-          <h3>Có Thể Bạn Thích</h3>
+          <h3>{translations.categories.yourLikes}</h3>
           <div class="related-list">
-            {relatedMovies.map((rm: any) => (
-              <a href={`/movies/${rm.slug}`} class="related-item">
-                <img src={getImageUrl(rm.poster_url)} alt={rm.name} loading="lazy" />
-                <div class="related-info">
-                  <h4>{rm.name}</h4>
-                  <span>{rm.year || 2024}</span>
-                </div>
-              </a>
-            ))}
+            {relatedMovies.map((rm: any) => {
+              const rmDisplayTitle = lang === 'vi' ? rm.name : (rm.origin_name || rm.name);
+              return (
+                <a href={`/movies/${rm.slug}`} class="related-item">
+                  <img src={getImageUrl(rm.poster_url)} alt={rmDisplayTitle} loading="lazy" />
+                  <div class="related-info">
+                    <h4>{rmDisplayTitle}</h4>
+                    <span>{rm.year || 2024}</span>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </aside>
       </div>
@@ -434,15 +455,31 @@ const episodesJson = JSON.stringify(episodes);
   }
 </style>
 
-<script define:vars={{ episodesJson, movieSlug: movie.slug }}>
+<script 
+  id="watch-data" 
+  type="application/json" 
+  data-movie-slug={movie.slug}
+  set:html={episodesJson}
+></script>
+
+<script>
+  import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
+  import { useTranslations } from '../../lib/useTranslations';
+  
+  // Get translations for client-side
+  const lang = document.documentElement.lang || 'vi';
+  const { translations } = useTranslations(lang);
+
   // Parse episodes data
-  const episodes = JSON.parse(episodesJson);
+  const dataEl = document.getElementById('watch-data');
+  const episodes = JSON.parse(dataEl?.textContent || '[]');
+  const movieSlug = dataEl?.dataset.movieSlug;
   let currentServerIndex = 0;
   
   // Get DOM elements
   const serverBtns = document.querySelectorAll('.server-btn');
   const episodesGrid = document.getElementById('episodes-grid');
-  const videoIframe = document.getElementById('video-iframe');
+  const videoIframe = document.getElementById('video-iframe') as HTMLIFrameElement;
   const currentEpisodeEl = document.querySelector('.current-episode');
   
   // Handle server change
@@ -452,7 +489,7 @@ const episodesJson = JSON.stringify(episodes);
       
       // Update active state
       serverBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      (btn as HTMLElement).classList.add('active');
       
       // Update episodes grid
       updateEpisodesGrid();
@@ -463,7 +500,7 @@ const episodesJson = JSON.stringify(episodes);
     if (!episodesGrid || !episodes[currentServerIndex]) return;
     
     const serverData = episodes[currentServerIndex].server_data;
-    episodesGrid.innerHTML = serverData.map((ep, idx) => `
+    episodesGrid.innerHTML = serverData.map((ep: any, idx: number) => `
       <button 
         class="episode-btn ${idx === 0 ? 'active' : ''}"
         data-slug="${ep.slug}"
@@ -487,21 +524,23 @@ const episodesJson = JSON.stringify(episodes);
     const episodeBtns = document.querySelectorAll('.episode-btn');
     episodeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const embed = btn.dataset.embed;
-        const name = btn.dataset.name;
-        const slug = btn.dataset.slug;
+        const embed = (btn as HTMLElement).dataset.embed;
+        const name = (btn as HTMLElement).dataset.name;
+        const slug = (btn as HTMLElement).dataset.slug;
         
         // Update active state
         episodeBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
         // Change episode
-        changeEpisode(embed, name, slug);
+        if (embed && name && slug) {
+          changeEpisode(embed, name, slug);
+        }
       });
     });
   }
   
-  function changeEpisode(embedUrl, episodeName, episodeSlug) {
+  function changeEpisode(embedUrl: string, episodeName: string, episodeSlug: string) {
     // Update iframe src
     if (videoIframe) {
       videoIframe.src = embedUrl;
@@ -532,15 +571,36 @@ const episodesJson = JSON.stringify(episodes);
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Đã copy link!');
+      alert(translations.messages.shareSuccess);
     }
   });
   
-  // Bookmark functionality (demo)
-  document.getElementById('bookmark-btn')?.addEventListener('click', (e) => {
-    const btn = e.currentTarget;
-    btn.classList.toggle('active');
-    const isBookmarked = btn.classList.contains('active');
-    btn.querySelector('svg')?.setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
-  });
+  // Watchlist functionality
+  const bookmarkBtn = document.getElementById('bookmark-btn') as HTMLButtonElement;
+  if (bookmarkBtn) {
+    const movieData = JSON.parse(bookmarkBtn.dataset.movie || '{}');
+    const btnText = bookmarkBtn.querySelector('.btn-text');
+    const svg = bookmarkBtn.querySelector('svg');
+
+    function updateWatchlistUI() {
+      const active = isInWatchlist(movieData.slug);
+      bookmarkBtn?.classList.toggle('active', active);
+      if (btnText) {
+        btnText.textContent = active 
+          ? translations.common.removeWatchlist 
+          : translations.common.addWatchlist;
+      }
+      if (svg) {
+        svg.setAttribute('fill', active ? 'currentColor' : 'none');
+      }
+    }
+
+    updateWatchlistUI();
+
+    bookmarkBtn.addEventListener('click', () => {
+      const added = toggleWatchlist(movieData);
+      updateWatchlistUI();
+      alert(added ? translations.messages.addedToWatchlist : translations.messages.removedFromWatchlist);
+    });
+  }
 </script>

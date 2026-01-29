@@ -119,6 +119,39 @@ export function getCategoryName(slug: string, lang: Language): string {
 }
 
 /**
+ * Get nation name in current language
+ */
+export function getNationName(slug: string, lang: Language): string {
+	const nationMap: Record<string, { vi: string; en: string }> = {
+		"trung-quoc": { vi: "Trung Quốc", en: "China" },
+		"han-quoc": { vi: "Hàn Quốc", en: "Korea" },
+		"nhat-ban": { vi: "Nhật Bản", en: "Japan" },
+		my: { vi: "Mỹ", en: "USA" },
+		"au-my": { vi: "Âu Mỹ", en: "Euro-US" },
+		"hong-kong": { vi: "Hồng Kông", en: "Hong Kong" },
+		"dai-loan": { vi: "Đài Loan", en: "Taiwan" },
+		"thai-lan": { vi: "Thái Lan", en: "Thailand" },
+		"an-do": { vi: "Ấn Độ", en: "India" },
+		phap: { vi: "Pháp", en: "France" },
+		anh: { vi: "Anh", en: "UK" },
+		canada: { vi: "Canada", en: "Canada" },
+		duc: { vi: "Đức", en: "Germany" },
+		"tay-ban-nha": { vi: "Tây Ban Nha", en: "Spain" },
+		"tho-nhi-ky": { vi: "Thổ Nhĩ Kỳ", en: "Turkey" },
+		"ha-lan": { vi: "Hà Lan", en: "Netherlands" },
+		indonesia: { vi: "Indonesia", en: "Indonesia" },
+		nga: { vi: "Nga", en: "Russia" },
+		mexico: { vi: "Mexico", en: "Mexico" },
+		australia: { vi: "Australia", en: "Australia" },
+		"thuy-dien": { vi: "Thụy Điển", en: "Sweden" },
+		philippines: { vi: "Philippines", en: "Philippines" },
+		"viet-nam": { vi: "Việt Nam", en: "Vietnam" },
+	};
+
+	return nationMap[slug]?.[lang] || slug;
+}
+
+/**
  * Format relative time in current language
  */
 export function formatRelativeTime(date: Date, lang: Language): string {

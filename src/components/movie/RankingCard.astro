@@ -3,12 +3,20 @@ interface Props {
   id: string;
   rank: number;
   title: string;
+  titleVi?: string;
   poster: string;
   rating?: number;
   year?: number;
 }
 
-const { id, rank, title, poster, rating = 8.0, year } = Astro.props;
+const { id, rank, title, titleVi, poster, rating = 8.0, year } = Astro.props;
+
+// Get translations
+import { useTranslations } from '../../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
+
+const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 ---
 
 <a href={`/movies/${id}`} class="ranking-card">
@@ -17,9 +25,9 @@ const { id, rank, title, poster, rating = 8.0, year } = Astro.props;
   </div>
   <div class="ranking-card__content">
     <div class="ranking-card__poster">
-      <img src={poster} alt={title} loading="lazy"/>
+      <img src={poster} alt={displayTitle} loading="lazy"/>
       <div class="ranking-card__overlay">
-        <button class="play-btn" aria-label="Xem phim">
+        <button class="play-btn" aria-label={translations.player.play}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
@@ -27,7 +35,7 @@ const { id, rank, title, poster, rating = 8.0, year } = Astro.props;
       </div>
     </div>
     <div class="ranking-card__info">
-      <h3 class="ranking-card__title">{title}</h3>
+      <h3 class="ranking-card__title">{displayTitle}</h3>
       <div class="ranking-card__meta">
         <span class="ranking-card__rating">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
