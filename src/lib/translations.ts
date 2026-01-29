@@ -10,6 +10,7 @@ const vi: Translations = {
 		forum: "Diễn Đàn",
 		about: "Về Chúng Tôi",
 		animation: "Hoạt Hình",
+		history: "Lịch Sử Xem",
 	},
 
 	common: {
@@ -27,6 +28,7 @@ const vi: Translations = {
 		removeWatchlist: "Xóa khỏi danh sách",
 		share: "Chia sẻ",
 		download: "Tải xuống",
+		clear: "Xóa tất cả",
 	},
 
 	movie: {
@@ -190,6 +192,7 @@ const en: Translations = {
 		forum: "Forum",
 		about: "About",
 		animation: "Animation",
+		history: "History",
 	},
 
 	common: {
@@ -207,6 +210,7 @@ const en: Translations = {
 		removeWatchlist: "Remove from Watchlist",
 		share: "Share",
 		download: "Download",
+		clear: "Clear All",
 	},
 
 	movie: {

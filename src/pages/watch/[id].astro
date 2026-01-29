@@ -78,7 +78,9 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
                 name: movie.name,
                 origin_name: movie.origin_name,
                 poster_url: movie.poster_url,
-                year: movie.year
+                thumb_url: movie.thumb_url,
+                year: movie.year,
+                time: movie.time || '' 
               })}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -478,7 +480,7 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
 ></script>
 
 <script>
-  import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
+  import { toggleWatchlist, isInWatchlist, addToHistory } from '../../lib/watchlist';
   import { useTranslations } from '../../lib/useTranslations';
   
   // Get translations for client-side
@@ -625,6 +627,13 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
       } else {
         alert(message);
       }
+    });
+
+    // Add to history on load
+    addToHistory({
+      ...movieData,
+      thumb_url: movieData.thumb_url,
+      duration: movieData.time
     });
   }
 </script>

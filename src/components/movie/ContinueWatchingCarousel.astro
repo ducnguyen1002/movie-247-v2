@@ -1,22 +1,20 @@
 ---
-import ContinueWatchingCard from './ContinueWatchingCard.astro';
-import { getImageUrl } from '../../lib/movieService';
 import { useTranslations } from '../../lib/useTranslations';
+import { getImageUrl } from '../../lib/movieService';
 
 interface Props {
   title: string;
-  movies: any[];
   viewAllLink?: string;
 }
 
-const { title, movies, viewAllLink } = Astro.props;
+const { title, viewAllLink } = Astro.props;
 
 // Get translations
 const langCookie = Astro.cookies.get('language');
-const { translations } = useTranslations(langCookie?.value);
+const { translations, lang } = useTranslations(langCookie?.value);
 ---
 
-<section class="continue-section">
+<section class="continue-section" id="continue-watching-section" style="display: none;">
   <div class="container">
     <div class="carousel-header">
       <h2 class="carousel-title">{title}</h2>
@@ -30,12 +28,12 @@ const { translations } = useTranslations(langCookie?.value);
           </a>
         )}
         <div class="carousel-nav">
-          <button class="nav-btn nav-prev" aria-label="Previous">
+          <button class="nav-btn nav-prev" id="cw-prev" aria-label="Previous">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <button class="nav-btn nav-next" aria-label="Next">
+          <button class="nav-btn nav-next" id="cw-next" aria-label="Next">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6"/>
             </svg>
@@ -44,22 +42,35 @@ const { translations } = useTranslations(langCookie?.value);
       </div>
     </div>
 
-    <div class="carousel-track continue-track">
-      {
-        movies.map((movie: any, index: number) => (
-          <ContinueWatchingCard
-            id={movie.slug}
-            title={movie.name}
-            episode={movie.episode_current || ''}
-            poster={getImageUrl(movie.thumb_url || movie.poster_url)}
-            duration={movie.time || ''}
-            progress={Math.floor(Math.random() * 60) + 20}
-          />
-        ))
-      }
+    <div class="carousel-track continue-track" id="continue-watching-track">
+      <!-- Injected via JS -->
     </div>
   </div>
 </section>
+
+<!-- Template for client-side rendering -->
+<template id="continue-card-template">
+  <a href="" class="continue-card">
+    <div class="continue-card__poster">
+      <img src="" alt="" loading="lazy"/>
+      <div class="continue-card__overlay">
+        <button class="play-btn" aria-label="Tiếp tục xem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </button>
+      </div>
+      <div class="continue-card__progress">
+        <div class="progress-bar" style="width: 0%"></div>
+      </div>
+      <span class="continue-card__duration"></span>
+    </div>
+    <div class="continue-card__info">
+      <h3 class="continue-card__title"></h3>
+      <span class="continue-card__episode"></span>
+    </div>
+  </a>
+</template>
 
 <style>
   .continue-section {
@@ -114,6 +125,7 @@ const { translations } = useTranslations(langCookie?.value);
     border: 1px solid var(--color-border);
     color: var(--color-text-secondary);
     transition: all var(--transition-fast);
+    cursor: pointer;
   }
 
   .nav-btn:hover {
@@ -134,25 +146,147 @@ const { translations } = useTranslations(langCookie?.value);
     display: none;
   }
 
-  .continue-track > :global(*) {
+  /* Card Styles */
+  .continue-track :global(.continue-card) {
+    display: block;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    /* transition removed */
+    flex-shrink: 0;
     flex: 0 0 calc((100% - 2 * var(--spacing-md)) / 3);
     min-width: 280px;
   }
 
+  .continue-track :global(.continue-card:hover) {
+    /* transform removed */
+  }
+
+  .continue-track :global(.continue-card:hover .continue-card__overlay) {
+    opacity: 1;
+  }
+
+  .continue-track :global(.continue-card:hover img) {
+    transform: scale(1.05);
+  }
+
+  /* Poster - 16:9 ratio */
+  .continue-track :global(.continue-card__poster) {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .continue-track :global(.continue-card__poster img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .continue-track :global(.continue-card__overlay) {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .continue-track :global(.play-btn) {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-background);
+    transition: transform var(--transition-fast);
+    border: none;
+    cursor: pointer;
+  }
+
+  .continue-track :global(.play-btn:hover) {
+    transform: scale(1.1);
+  }
+
+  .continue-track :global(.play-btn svg) {
+    margin-left: 3px;
+  }
+
+  /* Progress Bar */
+  .continue-track :global(.continue-card__progress) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .continue-track :global(.progress-bar) {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 0 2px 2px 0;
+    transition: width var(--transition-normal);
+  }
+
+  /* Duration Badge */
+  .continue-track :global(.continue-card__duration) {
+    position: absolute;
+    bottom: 12px;
+    right: 8px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+
+  /* Info */
+  .continue-track :global(.continue-card__info) {
+    padding: var(--spacing-sm) 0;
+  }
+
+  .continue-track :global(.continue-card__title) {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .continue-track :global(.continue-card__episode) {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
   /* Responsive */
   @media (max-width: 992px) {
-    .continue-track > :global(*) {
+    .continue-track :global(.continue-card) {
       flex: 0 0 calc((100% - var(--spacing-md)) / 2);
       min-width: 260px;
     }
   }
 
   @media (max-width: 576px) {
-    .continue-track > :global(*) {
+    .continue-track :global(.continue-card) {
       flex: 0 0 85%;
       min-width: 240px;
     }
 
+    .continue-track :global(.play-btn) {
+      width: 44px;
+      height: 44px;
+    }
+    
     .view-all {
       display: none;
     }
@@ -160,19 +294,74 @@ const { translations } = useTranslations(langCookie?.value);
 </style>
 
 <script>
-  document.querySelectorAll('.continue-section').forEach(section => {
-    const track = section.querySelector('.continue-track') as HTMLElement;
-    const prevBtn = section.querySelector('.nav-prev');
-    const nextBtn = section.querySelector('.nav-next');
-    
-    const scrollAmount = 320;
+  import { getHistory } from '../../lib/watchlist';
+  import { getImageUrl } from '../../lib/movieService';
 
-    prevBtn?.addEventListener('click', () => {
-      track?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    });
+  // Get User language for displaying titles
+  const lang = document.documentElement.lang || 'vi';
 
-    nextBtn?.addEventListener('click', () => {
-      track?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  function renderContinueWatching() {
+    const history = getHistory().slice(0, 10);
+    const section = document.getElementById('continue-watching-section');
+    const track = document.getElementById('continue-watching-track');
+    const template = document.getElementById('continue-card-template') as HTMLTemplateElement;
+
+    if (!section || !track || !template) return;
+
+    if (history.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    track.innerHTML = '';
+
+    history.forEach(item => {
+      const clone = template.content.cloneNode(true) as DocumentFragment;
+      const link = clone.querySelector('.continue-card') as HTMLAnchorElement;
+      const img = clone.querySelector('img') as HTMLImageElement;
+      const title = clone.querySelector('.continue-card__title');
+      const episode = clone.querySelector('.continue-card__episode');
+      const duration = clone.querySelector('.continue-card__duration');
+      const progressBar = clone.querySelector('.progress-bar') as HTMLElement;
+      
+      const displayTitle = lang === 'vi' ? item.name : (item.origin_name || item.name);
+      const thumbUrl = getImageUrl(item.thumb_url || item.poster_url); // Fallback logic typically in service
+
+      if(link) link.href = `/watch/${item.slug}`;
+      if(img) {
+          img.src = thumbUrl; // Use thumb_url if available for 16:9 usually, or fallback
+          img.alt = displayTitle;
+      }
+      if(title) title.textContent = displayTitle;
+      if(episode) episode.textContent = item.year ? String(item.year) : ''; // Use year or episode info if stored
+      if(duration && item.duration) duration.textContent = item.duration;
+      
+      // Random progress for demo if not real
+      if(progressBar) progressBar.style.width = Math.floor(Math.random() * 80 + 10) + '%'; 
+
+      track.appendChild(clone);
     });
+  }
+
+  // Initial Render
+  renderContinueWatching();
+
+  // Re-render on updates (e.g. if user clears history in another tab)
+  window.addEventListener('history-updated', renderContinueWatching);
+
+  // Carousel Navigation
+  const track = document.getElementById('continue-watching-track');
+  const prevBtn = document.getElementById('cw-prev');
+  const nextBtn = document.getElementById('cw-next');
+  
+  const scrollAmount = 320;
+
+  prevBtn?.addEventListener('click', () => {
+    track?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    track?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   });
 </script>

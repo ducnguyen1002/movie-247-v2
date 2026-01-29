@@ -11,6 +11,7 @@ export interface Translations {
 		forum: string;
 		about: string;
 		animation: string;
+		history: string;
 	};
 
 	// Common
@@ -29,6 +30,7 @@ export interface Translations {
 		removeWatchlist: string;
 		share: string;
 		download: string;
+		clear: string;
 	};
 
 	// Movie details

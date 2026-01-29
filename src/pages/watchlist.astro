@@ -14,21 +14,43 @@ const { translations, lang } = useTranslations(langCookie?.value);
   
   <main class="watchlist-page">
     <div class="container">
-      <div class="page-header">
-        <h1>{translations.categories.yourWatchlist}</h1>
-        <p class="count-text" id="watchlist-count"></p>
-      </div>
+      
+      <!-- History Section -->
+      <section class="list-section">
+        <div class="section-header">
+          <h1>{translations.nav.history || 'Lịch sử xem'}</h1> <!-- Fallback if no translation key -->
+          <button id="clear-history-btn" class="clear-btn">{translations.common.clear || 'Xóa tất cả'}</button>
+        </div>
+        
+        <div class="watchlist-grid" id="history-grid">
+           <!-- Rendered client-side -->
+        </div>
+        <div class="empty-message" id="history-empty" style="display: none;">
+           <p>{translations.messages.noMoviesFound || 'Bạn chưa xem phim nào.'}</p>
+        </div>
+      </section>
 
-      <div class="watchlist-empty" id="watchlist-empty" style="display: none;">
-        <div class="empty-icon">📁</div>
-        <h3>{translations.messages.noMoviesFound}</h3>
-        <p>{translations.messages.tryAgain}</p>
-        <a href="/movies" class="btn btn-primary">{translations.common.viewAll}</a>
-      </div>
+      <div class="divider"></div>
 
-      <div class="watchlist-grid" id="watchlist-grid">
-        <!-- Rendered client-side -->
-      </div>
+      <!-- Watchlist Section -->
+      <section class="list-section">
+        <div class="section-header">
+          <h1>{translations.categories.yourWatchlist}</h1>
+          <span class="count-text" id="watchlist-count"></span>
+        </div>
+
+        <div class="watchlist-grid" id="watchlist-grid">
+          <!-- Rendered client-side -->
+        </div>
+        
+        <div class="watchlist-empty" id="watchlist-empty" style="display: none;">
+          <div class="empty-icon">📁</div>
+          <h3>{translations.messages.noMoviesFound}</h3>
+          <p>{translations.messages.tryAgain}</p>
+          <a href="/movies" class="btn btn-primary">{translations.common.viewAll}</a>
+        </div>
+      </section>
+
     </div>
   </main>
 
@@ -42,8 +64,12 @@ const { translations, lang } = useTranslations(langCookie?.value);
     padding-bottom: var(--spacing-3xl);
   }
 
-  .page-header {
-    margin-bottom: var(--spacing-2xl);
+  .list-section {
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .section-header {
+    margin-bottom: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
     padding-bottom: var(--spacing-md);
     display: flex;
@@ -51,7 +77,7 @@ const { translations, lang } = useTranslations(langCookie?.value);
     justify-content: space-between;
   }
 
-  .page-header h1 {
+  .section-header h1 {
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-bold);
   }
@@ -59,6 +85,26 @@ const { translations, lang } = useTranslations(langCookie?.value);
   .count-text {
     font-size: var(--font-size-sm);
     color: var(--color-text-muted);
+  }
+  
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  
+  .clear-btn:hover {
+    color: var(--color-primary);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--spacing-2xl) 0;
+    opacity: 0.5;
   }
 
   /* Grid */
@@ -69,9 +115,14 @@ const { translations, lang } = useTranslations(langCookie?.value);
   }
 
   /* Empty State */
-  .watchlist-empty {
+  .watchlist-empty, .empty-message {
     text-align: center;
-    padding: var(--spacing-3xl) 0;
+    padding: var(--spacing-xl) 0;
+    color: var(--color-text-muted);
+  }
+  
+  .empty-message {
+      font-style: italic;
   }
 
   .empty-icon {
@@ -99,35 +150,67 @@ const { translations, lang } = useTranslations(langCookie?.value);
 </style>
 
 <script>
-  import { getWatchlist, removeFromWatchlist } from '../lib/watchlist';
+  import { getWatchlist, removeFromWatchlist, getHistory, removeFromHistory, clearHistory } from '../lib/watchlist';
   import { useTranslations } from '../lib/useTranslations';
   import { getImageUrl } from '../lib/movieService';
 
   const lang = document.documentElement.lang || 'vi';
   const { translations } = useTranslations(lang);
 
-  const grid = document.getElementById('watchlist-grid');
-  const emptyState = document.getElementById('watchlist-empty');
-  const countText = document.getElementById('watchlist-count');
+  // Watchlist DOM
+  const watchlistGrid = document.getElementById('watchlist-grid');
+  const watchlistEmpty = document.getElementById('watchlist-empty');
+  const watchlistCount = document.getElementById('watchlist-count');
+  
+  // History DOM
+  const historyGrid = document.getElementById('history-grid');
+  const historyEmpty = document.getElementById('history-empty');
+  const clearHistoryBtn = document.getElementById('clear-history-btn');
 
   function renderWatchlist() {
-    if (!grid || !emptyState || !countText) return;
+    if (!watchlistGrid || !watchlistEmpty || !watchlistCount) return;
 
     const items = getWatchlist();
     
     if (items.length === 0) {
-      grid.style.display = 'none';
-      emptyState.style.display = 'block';
-      countText.textContent = '';
+      watchlistGrid.style.display = 'none';
+      watchlistEmpty.style.display = 'block';
+      watchlistCount.textContent = '';
       return;
     }
 
-    grid.style.display = 'grid';
-    emptyState.style.display = 'none';
-    countText.textContent = `${items.length} ${translations.nav.movies.toLowerCase()}`;
+    watchlistGrid.style.display = 'grid';
+    watchlistEmpty.style.display = 'none';
+    watchlistCount.textContent = `${items.length} ${translations.nav.movies.toLowerCase()}`;
 
-    grid.innerHTML = items.map(item => {
+    watchlistGrid.innerHTML = items.map(item => createCardHtml(item, 'watchlist')).join('');
+    attachRemoveHandlers(watchlistGrid, 'watchlist');
+  }
+
+  function renderHistory() {
+     if (!historyGrid || !historyEmpty) return;
+     
+     const items = getHistory();
+     
+     if (items.length === 0) {
+         historyGrid.style.display = 'none';
+         historyEmpty.style.display = 'block';
+         if(clearHistoryBtn) clearHistoryBtn.style.display = 'none';
+         return;
+     }
+     
+     historyGrid.style.display = 'grid';
+     historyEmpty.style.display = 'none';
+     if(clearHistoryBtn) clearHistoryBtn.style.display = 'block';
+     
+     historyGrid.innerHTML = items.map(item => createCardHtml(item, 'history')).join('');
+     attachRemoveHandlers(historyGrid, 'history');
+  }
+
+  function createCardHtml(item: any, type: 'watchlist' | 'history') {
       const displayTitle = lang === 'vi' ? item.name : (item.origin_name || item.name);
+      const isHistory = type === 'history';
+      
       return `
         <div class="movie-card" data-slug="${item.slug}">
           <a href="/movies/${item.slug}" class="movie-card__poster">
@@ -139,47 +222,63 @@ const { translations, lang } = useTranslations(langCookie?.value);
                 </svg>
               </div>
             </div>
+            ${isHistory && item.duration ? `<div class="duration-badge">${item.duration}</div>` : ''}
           </a>
           <div class="movie-card__info">
             <h3 class="movie-card__title">${displayTitle}</h3>
             <div class="movie-card__meta">
               <span>${item.year || ''}</span>
-              <button class="remove-btn" data-slug="${item.slug}" title="${translations.common.removeWatchlist}">
+              <button class="remove-btn" data-slug="${item.slug}" data-type="${type}" title="${translations.common.removeWatchlist}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                 </svg>
               </button>
             </div>
+             ${isHistory ? `<div class="history-time" style="font-size: 10px; color: var(--color-text-muted); margin-top: 4px;">Xem: ${new Date(item.watchedAt).toLocaleDateString('vi-VN')}</div>` : ''}
           </div>
         </div>
       `;
-    }).join('');
-
-    // Attach remove handlers
-    grid.querySelectorAll('.remove-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const slug = (btn as HTMLElement).dataset.slug;
-        if (slug) {
-          removeFromWatchlist(slug);
-          renderWatchlist();
-          if (typeof (window as any).showToast === 'function') {
-            (window as any).showToast(translations.messages.removedFromWatchlist, 'info');
-          }
-        }
-      });
-    });
   }
+
+  function attachRemoveHandlers(container: HTMLElement, type: 'watchlist' | 'history') {
+      container.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const slug = (btn as HTMLElement).dataset.slug;
+          if (slug) {
+            if (type === 'watchlist') {
+                removeFromWatchlist(slug);
+                // Toast logic
+                 if (typeof (window as any).showToast === 'function') {
+                    (window as any).showToast(translations.messages.removedFromWatchlist, 'info');
+                }
+            } else {
+                removeFromHistory(slug);
+            }
+            // Re-render handled by event listeners
+          }
+        });
+      });
+  }
+  
+  // Clear History
+  clearHistoryBtn?.addEventListener('click', () => {
+      if(confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem không?')) {
+          clearHistory();
+      }
+  });
 
   // Initial render
   renderWatchlist();
+  renderHistory();
 
-  // Listen for updates from other tabs/windows
+  // Listen for updates
   window.addEventListener('watchlist-updated', renderWatchlist);
+  window.addEventListener('history-updated', renderHistory);
 </script>
 
 <style is:global>
-  /* Reuse MovieCard styles but slightly modified for the remove button */
+  /* Reuse MovieCard styles */
   .watchlist-grid .movie-card {
     display: flex;
     flex-direction: column;
@@ -228,6 +327,18 @@ const { translations, lang } = useTranslations(langCookie?.value);
     background: var(--color-primary);
     border-radius: var(--radius-full);
     color: var(--color-background);
+  }
+  
+  .duration-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
   }
 
   .watchlist-grid .movie-card__info {
