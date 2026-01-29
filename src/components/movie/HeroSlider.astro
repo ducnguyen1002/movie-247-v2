@@ -1,0 +1,599 @@
+---
+import { getImageUrl } from '../../lib/movieService';
+import { useTranslations } from '../../lib/useTranslations';
+
+interface SlideMovie {
+  id: string;
+  title: string;
+  year?: number;
+  rating?: number;
+  duration?: string;
+  genres?: string[];
+  synopsis?: string;
+  backdrop: string;
+  logo?: string;
+  season?: string;
+}
+
+interface Props {
+  movies: SlideMovie[];
+}
+
+const { movies } = Astro.props;
+const slides = movies.slice(0, 5); // Max 5 slides
+
+// Get translations
+const langCookie = Astro.cookies.get('language');
+const { t, translations } = useTranslations(langCookie?.value);
+---
+
+<section class="hero-slider" id="heroSlider">
+  <div class="hero-slider__slides">
+    {slides.map((movie, index) => (
+      <div class={`hero-slide ${index === 0 ? 'active' : ''}`} data-index={index}>
+        <!-- Backdrop -->
+        <div class="hero-slide__backdrop">
+          <img src={movie.backdrop} alt={movie.title} />
+          <div class="hero-slide__gradient"></div>
+        </div>
+        
+        <!-- Content -->
+        <div class="container">
+          <div class="hero-slide__content">
+            <!-- Season Badge -->
+            {movie.season && (
+              <span class="hero-slide__season">{movie.season}</span>
+            )}
+            
+            <!-- Title -->
+            <h1 class="hero-slide__title">{movie.title}</h1>
+            
+            <!-- Meta -->
+            <div class="hero-slide__meta">
+              {movie.rating && (
+                <span class="hero-slide__rating">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  {movie.rating.toFixed(1)}
+                </span>
+              )}
+              {movie.duration && <span class="hero-slide__dot">•</span>}
+              {movie.duration && <span>{movie.duration}</span>}
+              {movie.year && <span class="hero-slide__dot">•</span>}
+              {movie.year && <span>{movie.year}</span>}
+              {movie.genres && movie.genres.length > 0 && <span class="hero-slide__dot">•</span>}
+              {movie.genres && movie.genres.slice(0, 2).map((genre, i) => (
+                <span>{genre}{i === 0 && movie.genres!.length > 1 ? ' • ' : ''}</span>
+              ))}
+            </div>
+            
+            <!-- Synopsis -->
+            {movie.synopsis && (
+              <p class="hero-slide__synopsis">{movie.synopsis}</p>
+            )}
+            
+            <!-- Actions -->
+            <div class="hero-slide__actions">
+              <a href={`/watch/${movie.id}`} class="btn-hero btn-hero--primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                {translations.common.playNow}
+              </a>
+              <button class="btn-hero btn-hero--secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                {translations.common.watchTrailer}
+              </button>
+              <button class="btn-hero btn-hero--outline">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                {translations.common.addWatchlist}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Movie Logo (optional, on right side) -->
+        {movie.logo && (
+          <div class="hero-slide__logo">
+            <img src={movie.logo} alt={movie.title} />
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+  
+  <!-- Slide Navigation Dots -->
+  <div class="hero-slider__dots">
+    {slides.map((_, index) => (
+      <button 
+        class={`hero-dot ${index === 0 ? 'active' : ''}`} 
+        data-slide={index}
+        aria-label={`Slide ${index + 1}`}
+      ></button>
+    ))}
+  </div>
+  
+  <!-- Arrow Navigation -->
+  <button class="hero-slider__arrow hero-slider__arrow--prev" aria-label="Previous slide">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </button>
+  <button class="hero-slider__arrow hero-slider__arrow--next" aria-label="Next slide">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 18l6-6-6-6"/>
+    </svg>
+  </button>
+</section>
+
+<style>
+  .hero-slider {
+    position: relative;
+    min-height: 85vh;
+    margin-top: calc(-1 * var(--header-height));
+    overflow: hidden;
+  }
+
+  .hero-slider__slides {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Individual Slide */
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+
+  .hero-slide.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+  }
+
+  /* Backdrop */
+  .hero-slide__backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-slide__backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .hero-slide__gradient {
+    position: absolute;
+    inset: 0;
+    background: 
+      linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(0, 0, 0, 0.7) 35%,
+        rgba(0, 0, 0, 0.3) 60%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to top,
+        var(--color-background) 0%,
+        rgba(0, 0, 0, 0.5) 20%,
+        transparent 50%
+      );
+  }
+
+  /* Content */
+  .hero-slide__content {
+    position: relative;
+    z-index: 10;
+    max-width: 500px;
+    padding-top: calc(var(--header-height) + var(--spacing-4xl));
+    min-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: var(--spacing-4xl);
+  }
+
+  /* Season Badge */
+  .hero-slide__season {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: var(--spacing-md);
+    width: fit-content;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Title */
+  .hero-slide__title {
+    font-size: 3.5rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.1;
+    margin-bottom: var(--spacing-md);
+    color: #FFFFFF;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Meta */
+  .hero-slide__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .hero-slide__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-rating);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .hero-slide__rating svg {
+    fill: var(--color-rating);
+  }
+
+  .hero-slide__dot {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+  }
+
+  /* Synopsis */
+  .hero-slide__synopsis {
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.7;
+    margin-bottom: var(--spacing-lg);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 450px;
+  }
+
+  /* Actions */
+  .hero-slide__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .btn-hero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: 12px 24px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+  }
+
+  .btn-hero--primary {
+    background: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  .btn-hero--primary:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(29, 185, 84, 0.4);
+  }
+
+  .btn-hero--secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-hero--secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+  }
+
+  .btn-hero--outline {
+    background: transparent;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-hero--outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #FFFFFF;
+  }
+
+  /* Movie Logo */
+  .hero-slide__logo {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    max-width: 400px;
+    opacity: 0.9;
+  }
+
+  .hero-slide__logo img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Navigation Dots */
+  .hero-slider__dots {
+    position: absolute;
+    bottom: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    display: flex;
+    gap: var(--spacing-sm);
+    z-index: 20;
+  }
+
+  .hero-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+  }
+
+  .hero-dot:hover {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .hero-dot.active {
+    background: #FFFFFF;
+    width: 28px;
+  }
+
+  /* Arrow Navigation */
+  .hero-slider__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    opacity: 0;
+  }
+
+  .hero-slider:hover .hero-slider__arrow {
+    opacity: 1;
+  }
+
+  .hero-slider__arrow:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .hero-slider__arrow--prev {
+    left: var(--spacing-lg);
+  }
+
+  .hero-slider__arrow--next {
+    right: var(--spacing-lg);
+  }
+
+  /* Light Theme */
+  [data-theme="light"] .hero-slide__gradient {
+    background: 
+      linear-gradient(
+        to right,
+        rgba(248, 249, 250, 0.98) 0%,
+        rgba(248, 249, 250, 0.85) 30%,
+        rgba(248, 249, 250, 0.4) 55%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to top,
+        var(--color-background) 0%,
+        rgba(248, 249, 250, 0.7) 20%,
+        transparent 50%
+      );
+  }
+
+  [data-theme="light"] .hero-slide__title {
+    color: var(--color-text-primary);
+    text-shadow: none;
+  }
+
+  [data-theme="light"] .hero-slide__meta,
+  [data-theme="light"] .hero-slide__synopsis {
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .hero-slide__season {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  [data-theme="light"] .btn-hero--secondary {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  [data-theme="light"] .btn-hero--outline {
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  [data-theme="light"] .hero-dot {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  [data-theme="light"] .hero-dot.active {
+    background: var(--color-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .hero-slide__logo {
+      display: none;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .hero-slider {
+      min-height: 70vh;
+    }
+
+    .hero-slide__content {
+      min-height: 70vh;
+      padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    }
+
+    .hero-slide__title {
+      font-size: 2.5rem;
+    }
+
+    .hero-slider__arrow {
+      display: none;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .hero-slider {
+      min-height: 60vh;
+    }
+
+    .hero-slide__content {
+      min-height: 60vh;
+      padding-bottom: var(--spacing-3xl);
+    }
+
+    .hero-slide__title {
+      font-size: 1.75rem;
+    }
+
+    .hero-slide__synopsis {
+      -webkit-line-clamp: 2;
+      display: none;
+    }
+
+    .btn-hero {
+      padding: 10px 16px;
+      font-size: var(--font-size-xs);
+    }
+
+    .hero-slider__dots {
+      bottom: var(--spacing-lg);
+      right: var(--spacing-lg);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('heroSlider');
+    if (!slider) return;
+
+    const slides = slider.querySelectorAll('.hero-slide');
+    const dots = slider.querySelectorAll('.hero-dot');
+    const prevBtn = slider.querySelector('.hero-slider__arrow--prev');
+    const nextBtn = slider.querySelector('.hero-slider__arrow--next');
+    
+    let currentIndex = 0;
+    let autoPlayInterval: ReturnType<typeof setInterval>;
+    const autoPlayDelay = 6000;
+
+    function goToSlide(index: number) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+      currentIndex = index;
+    }
+
+    function nextSlide() {
+      const newIndex = (currentIndex + 1) % slides.length;
+      goToSlide(newIndex);
+    }
+
+    function prevSlide() {
+      const newIndex = (currentIndex - 1 + slides.length) % slides.length;
+      goToSlide(newIndex);
+    }
+
+    function startAutoPlay() {
+      autoPlayInterval = setInterval(nextSlide, autoPlayDelay);
+    }
+
+    function stopAutoPlay() {
+      clearInterval(autoPlayInterval);
+    }
+
+    // Event listeners
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        goToSlide(index);
+        stopAutoPlay();
+        startAutoPlay();
+      });
+    });
+
+    prevBtn?.addEventListener('click', () => {
+      prevSlide();
+      stopAutoPlay();
+      startAutoPlay();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      nextSlide();
+      stopAutoPlay();
+      startAutoPlay();
+    });
+
+    // Pause on hover
+    slider.addEventListener('mouseenter', stopAutoPlay);
+    slider.addEventListener('mouseleave', startAutoPlay);
+
+    // Start autoplay
+    startAutoPlay();
+  });
+</script>

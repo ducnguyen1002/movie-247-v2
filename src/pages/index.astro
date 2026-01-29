@@ -2,8 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
-import HeroBanner from '../components/movie/HeroBanner.astro';
+import HeroSlider from '../components/movie/HeroSlider.astro';
 import MovieCarousel from '../components/movie/MovieCarousel.astro';
+import ContinueWatchingCarousel from '../components/movie/ContinueWatchingCarousel.astro';
+import RankingCarousel from '../components/movie/RankingCarousel.astro';
+import SmallCarousel from '../components/movie/SmallCarousel.astro';
+import GenreExplorer from '../components/movie/GenreExplorer.astro';
+import StreamingLogos from '../components/movie/StreamingLogos.astro';
 import { getNewUpdatedMovies, getMoviesByCategory, getImageUrl, type Movie } from '../lib/movieService';
 import { MOVIE_GENRES } from '../lib/constants';
 
@@ -12,103 +17,128 @@ const newMoviesRes = await getNewUpdatedMovies(1) as any;
 const singleMoviesRes = await getMoviesByCategory('phim-le', 1, 12);
 const seriesMoviesRes = await getMoviesByCategory('phim-bo', 1, 12);
 const animationRes = await getMoviesByCategory('hoat-hinh', 1, 12);
+const tvShowsRes = await getMoviesByCategory('tv-shows', 1, 12);
 
 // Extract items from responses
-// Note: getNewUpdatedMovies returns { items } directly, while getMoviesByCategory returns { data: { items } }
 const newMovies = newMoviesRes?.items || [];
 const singleMovies = singleMoviesRes?.data?.items || [];
 const seriesMovies = seriesMoviesRes?.data?.items || [];
 const animationMovies = animationRes?.data?.items || [];
+const tvShows = tvShowsRes?.data?.items || [];
 
-// Get featured movie for hero banner
-const featuredMovie = newMovies[0];
+// Prepare slides for HeroSlider (first 5 movies)
+const heroSlides = newMovies.slice(0, 5).map((movie: any, index: number) => ({
+  id: movie.slug,
+  title: movie.name,
+  year: movie.year || 2024,
+  rating: 8.0 + Math.random() * 1.5,
+  duration: movie.time || "2h 30m",
+  genres: movie.category?.slice(0, 2).map((c: any) => c.name) || [],
+  synopsis: movie.content || "Khám phá bộ phim hấp dẫn này với những tình tiết gay cấn và diễn xuất xuất sắc.",
+  backdrop: getImageUrl(movie.thumb_url || movie.poster_url),
+  season: index === 0 ? "Season 3" : undefined,
+}));
+
+// Prepare genres with movies for GenreExplorer
+// Use movies from different categories to simulate genre-based grouping
+const allMoviesPool = [...singleMovies, ...seriesMovies, ...animationMovies, ...tvShows, ...newMovies];
+const genresWithMovies = MOVIE_GENRES.slice(0, 8).map((genre, index) => {
+  // Distribute movies across genres for demonstration
+  const startIndex = (index * 3) % allMoviesPool.length;
+  const genreMovies = allMoviesPool.slice(startIndex, startIndex + 5);
+  return {
+    name: genre.name,
+    slug: genre.slug,
+    movies: genreMovies.length > 0 ? genreMovies : allMoviesPool.slice(0, 5),
+  };
+});
+
+// Get translations
+import { useTranslations } from '../lib/useTranslations';
+const langCookie = Astro.cookies.get('language');
+const { translations, lang } = useTranslations(langCookie?.value);
 ---
 
 <BaseLayout title="Movie247 - Xem Phim Online Chất Lượng Cao">
   <Header isTransparent={true} />
   
   <main>
-    <!-- Hero Banner -->
-    {featuredMovie && (
-      <HeroBanner 
-        id={featuredMovie.slug}
-        title={featuredMovie.name}
-        titleVi={featuredMovie.name}
-        year={featuredMovie.year || 2024}
-        rating={8.5}
-        duration={featuredMovie.time || "N/A"}
-        genres={featuredMovie.category?.map((c: any) => c.name) || []}
-        synopsis=""
-        backdrop={getImageUrl(featuredMovie.poster_url)}
-      />
+    <!-- Hero Slider -->
+    {heroSlides.length > 0 && (
+      <HeroSlider movies={heroSlides} />
     )}
+
+    <!-- Streaming Logos -->
+    <StreamingLogos />
 
     <!-- Content Sections -->
     <div class="home-content">
-      <!-- Streaming Logos -->
-      <div class="logos-section">
-        <div class="container">
-          <div class="logos-bar">
-            <span class="logo-item">Disney+</span>
-            <span class="logo-item">NETFLIX</span>
-            <span class="logo-item">HBO MAX</span>
-            <span class="logo-item">PIXAR</span>
-            <span class="logo-item">MARVEL</span>
-            <span class="logo-item">STAR WARS</span>
-          </div>
-        </div>
-      </div>
+      <!-- Continue Watching (16:9 cards with progress bar) -->
+      {newMovies.length > 0 && (
+        <ContinueWatchingCarousel 
+          title={translations.categories.continueWatching}
+          movies={newMovies.slice(0, 6)}
+          viewAllLink="/history"
+        />
+      )}
 
-      <!-- Just Release -->
+      <!-- Popular of the Week (Numbered ranking) -->
+      {singleMovies.length > 0 && (
+        <RankingCarousel 
+          title={translations.categories.popularThisWeek}
+          movies={singleMovies}
+          viewAllLink="/movies?sort=popular"
+        />
+      )}
+
+      <!-- Just Release (Standard cards) -->
       {newMovies.length > 0 && (
         <MovieCarousel 
-          title="Phim Mới Cập Nhật" 
+          title={translations.categories.newUpdates}
           movies={newMovies}
           viewAllLink="/movies"
           useApi={true}
         />
       )}
 
-      <!-- Phim Lẻ -->
-      {singleMovies.length > 0 && (
-        <MovieCarousel 
-          title="Phim Lẻ" 
-          movies={singleMovies}
-          viewAllLink="/movies?category=phim-le"
-          useApi={true}
+      <!-- Your Watchlist (Smaller cards) -->
+      {seriesMovies.length > 0 && (
+        <SmallCarousel 
+          title={translations.categories.yourWatchlist}
+          movies={seriesMovies}
+          viewAllLink="/watchlist"
         />
       )}
 
-      <!-- Phim Bộ -->
+      <!-- Genre Explorer with Movie Backdrops -->
+      <GenreExplorer 
+        title={translations.hero.exploreByGenre}
+        genresWithMovies={genresWithMovies}
+      />
+
+      <!-- Your Likes (Smaller cards with ratings) -->
+      {animationMovies.length > 0 && (
+        <SmallCarousel 
+          title={translations.categories.yourLikes}
+          movies={animationMovies}
+          viewAllLink="/recommendations"
+        />
+      )}
+
+      <!-- Phim Bộ (Standard cards) -->
       {seriesMovies.length > 0 && (
         <MovieCarousel 
-          title="Phim Bộ" 
+          title={translations.nav.tvShows}
           movies={seriesMovies}
           viewAllLink="/tv-shows"
           useApi={true}
         />
       )}
 
-      <!-- Genres Section -->
-      <section class="genres-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">Khám Phá Theo Thể Loại</h2>
-          </div>
-          <div class="genres-scroll">
-            {MOVIE_GENRES.slice(0, 10).map(genre => (
-              <a href={`/movies?genre=${genre.slug}`} class="genre-pill">
-                <span>{genre.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <!-- Hoạt Hình -->
       {animationMovies.length > 0 && (
         <MovieCarousel 
-          title="Phim Hoạt Hình" 
+          title={translations.nav.animation}
           movies={animationMovies}
           viewAllLink="/movies?category=hoat-hinh"
           useApi={true}
@@ -117,89 +147,21 @@ const featuredMovie = newMovies[0];
     </div>
   </main>
 
+
   <Footer />
 </BaseLayout>
 
+
 <style>
   .home-content {
-    padding-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    padding-bottom: var(--spacing-xl);
   }
 
-  /* Logos Section Marquee */
-  .logos-section {
-    margin: var(--spacing-xl) 0 var(--spacing-2xl);
-    overflow: hidden;
-    background: var(--color-background-elevated);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--spacing-md) 0;
-  }
-
-  .logos-wrapper {
-    display: flex;
-    white-space: nowrap;
-  }
-
-  .logos-track {
-    display: flex;
-    gap: var(--spacing-3xl);
-    animation: marquee 30s linear infinite;
-    padding: 0 var(--spacing-xl);
-  }
-
-  @keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  .logo-item {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-muted);
-    opacity: 0.6;
-    transition: opacity var(--transition-fast), color var(--transition-fast);
-    padding: 0 var(--spacing-xl);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .logo-item:hover {
-    opacity: 1;
-    color: var(--color-primary);
-  }
-
-  /* Genres Section */
-  .genres-section {
-    padding: var(--spacing-2xl) 0;
-  }
-
-  .genres-scroll {
-    display: flex;
-    gap: var(--spacing-md);
-    overflow-x: auto;
-    padding-bottom: var(--spacing-sm);
-    scrollbar-width: none;
-  }
-
-  .genres-scroll::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Responsive */
-  @media (max-width: 992px) {
-    .logos-bar {
-      gap: var(--spacing-xl);
-      flex-wrap: wrap;
-    }
-  }
-
+  /* Responsive spacing adjustments */
   @media (max-width: 768px) {
-    .logos-bar {
-      gap: var(--spacing-lg);
-    }
-
-    .logo-item {
-      font-size: var(--font-size-sm);
+    .home-content {
+      padding-top: var(--spacing-md);
     }
   }
 </style>

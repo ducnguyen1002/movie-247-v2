@@ -8,6 +8,7 @@ const vi: Translations = {
 		tvShows: "Phim Bộ",
 		search: "Tìm Kiếm",
 		about: "Về Chúng Tôi",
+		animation: "Hoạt Hình",
 	},
 
 	common: {
@@ -19,6 +20,12 @@ const vi: Translations = {
 		next: "Tiếp",
 		page: "Trang",
 		of: "của",
+		playNow: "Xem Ngay",
+		watchTrailer: "Xem Trailer",
+		addWatchlist: "Thêm danh sách",
+		removeWatchlist: "Xóa khỏi danh sách",
+		share: "Chia sẻ",
+		download: "Tải xuống",
 	},
 
 	movie: {
@@ -35,6 +42,9 @@ const vi: Translations = {
 		quality: "Chất lượng",
 		language: "Ngôn ngữ",
 		status: "Trạng thái",
+		relatedMovies: "Phim Liên Quan",
+		comments: "Bình luận",
+		synopsis: "Tóm tắt nội dung",
 	},
 
 	search: {
@@ -42,6 +52,14 @@ const vi: Translations = {
 		title: "Tìm Kiếm Phim",
 		resultsFor: "Kết quả tìm kiếm cho",
 		noResults: "Không tìm thấy phim nào",
+		filterByGenre: "Lọc theo thể loại",
+		filterByYear: "Lọc theo năm",
+		filterByCountry: "Lọc theo quốc gia",
+		sortBy: "Sắp xếp theo",
+		newest: "Mới nhất",
+		oldest: "Cũ nhất",
+		mostViewed: "Xem nhiều nhất",
+		topRated: "Đánh giá cao nhất",
 	},
 
 	auth: {
@@ -55,6 +73,9 @@ const vi: Translations = {
 		hasAccount: "Đã có tài khoản?",
 		loginButton: "Đăng nhập",
 		registerButton: "Đăng ký",
+		logout: "Đăng xuất",
+		profile: "Hồ sơ",
+		settings: "Cài đặt",
 	},
 
 	about: {
@@ -75,6 +96,7 @@ const vi: Translations = {
 		terms: "Điều khoản sử dụng",
 		privacy: "Chính sách bảo mật",
 		copyright: "© 2024 Movie247. Tất cả quyền được bảo lưu.",
+		followUs: "Theo dõi chúng tôi",
 	},
 
 	categories: {
@@ -82,6 +104,77 @@ const vi: Translations = {
 		trending: "Phim Thịnh Hành",
 		popular: "Phim Phổ Biến",
 		recommended: "Phim Đề Xuất",
+		continueWatching: "Tiếp Tục Xem",
+		yourWatchlist: "Danh Sách Xem",
+		yourLikes: "Có Thể Bạn Thích",
+		topRated: "Đánh Giá Cao",
+		popularThisWeek: "Phổ Biến Trong Tuần",
+		featuredMovies: "Phim Nổi Bật",
+		latestEpisodes: "Tập Mới Nhất",
+	},
+
+	hero: {
+		exploreByGenre: "Khám phá theo thể loại",
+		season: "Mùa",
+		episode: "Tập",
+		newEpisode: "Tập mới",
+	},
+
+	genres: {
+		title: "Khám Phá Theo Thể Loại",
+		action: "Hành Động",
+		romance: "Tình Cảm",
+		comedy: "Hài Hước",
+		horror: "Kinh Dị",
+		sciFi: "Viễn Tưởng",
+		drama: "Chính Kịch",
+		adventure: "Phiêu Lưu",
+		animation: "Hoạt Hình",
+		thriller: "Giật Gân",
+		fantasy: "Giả Tưởng",
+		documentary: "Tài Liệu",
+		war: "Chiến Tranh",
+		music: "Âm Nhạc",
+		family: "Gia Đình",
+		mystery: "Bí Ẩn",
+		history: "Lịch Sử",
+	},
+
+	player: {
+		play: "Phát",
+		pause: "Tạm dừng",
+		mute: "Tắt tiếng",
+		unmute: "Bật tiếng",
+		fullscreen: "Toàn màn hình",
+		exitFullscreen: "Thoát toàn màn hình",
+		settings: "Cài đặt",
+		quality: "Chất lượng",
+		speed: "Tốc độ",
+		subtitles: "Phụ đề",
+		nextEpisode: "Tập tiếp theo",
+		previousEpisode: "Tập trước",
+		selectServer: "Chọn máy chủ",
+		server: "Máy chủ",
+	},
+
+	time: {
+		justNow: "Vừa xong",
+		minutesAgo: "phút trước",
+		hoursAgo: "giờ trước",
+		daysAgo: "ngày trước",
+		weeksAgo: "tuần trước",
+		monthsAgo: "tháng trước",
+		yearsAgo: "năm trước",
+	},
+
+	messages: {
+		addedToWatchlist: "Đã thêm vào danh sách xem",
+		removedFromWatchlist: "Đã xóa khỏi danh sách xem",
+		shareSuccess: "Đã sao chép liên kết",
+		errorOccurred: "Đã xảy ra lỗi",
+		tryAgain: "Vui lòng thử lại",
+		noMoviesFound: "Không tìm thấy phim",
+		endOfList: "Đã hết danh sách",
 	},
 };
 
@@ -93,6 +186,7 @@ const en: Translations = {
 		tvShows: "TV Shows",
 		search: "Search",
 		about: "About",
+		animation: "Animation",
 	},
 
 	common: {
@@ -104,6 +198,12 @@ const en: Translations = {
 		next: "Next",
 		page: "Page",
 		of: "of",
+		playNow: "Play Now",
+		watchTrailer: "Watch Trailer",
+		addWatchlist: "Add Watchlist",
+		removeWatchlist: "Remove from Watchlist",
+		share: "Share",
+		download: "Download",
 	},
 
 	movie: {
@@ -120,6 +220,9 @@ const en: Translations = {
 		quality: "Quality",
 		language: "Language",
 		status: "Status",
+		relatedMovies: "Related Movies",
+		comments: "Comments",
+		synopsis: "Synopsis",
 	},
 
 	search: {
@@ -127,6 +230,14 @@ const en: Translations = {
 		title: "Search Movies",
 		resultsFor: "Search results for",
 		noResults: "No movies found",
+		filterByGenre: "Filter by genre",
+		filterByYear: "Filter by year",
+		filterByCountry: "Filter by country",
+		sortBy: "Sort by",
+		newest: "Newest",
+		oldest: "Oldest",
+		mostViewed: "Most Viewed",
+		topRated: "Top Rated",
 	},
 
 	auth: {
@@ -140,6 +251,9 @@ const en: Translations = {
 		hasAccount: "Already have an account?",
 		loginButton: "Login",
 		registerButton: "Register",
+		logout: "Logout",
+		profile: "Profile",
+		settings: "Settings",
 	},
 
 	about: {
@@ -160,6 +274,7 @@ const en: Translations = {
 		terms: "Terms of Service",
 		privacy: "Privacy Policy",
 		copyright: "© 2024 Movie247. All rights reserved.",
+		followUs: "Follow Us",
 	},
 
 	categories: {
@@ -167,6 +282,77 @@ const en: Translations = {
 		trending: "Trending",
 		popular: "Popular",
 		recommended: "Recommended",
+		continueWatching: "Continue Watching",
+		yourWatchlist: "Your Watchlist",
+		yourLikes: "You May Like",
+		topRated: "Top Rated",
+		popularThisWeek: "Popular This Week",
+		featuredMovies: "Featured Movies",
+		latestEpisodes: "Latest Episodes",
+	},
+
+	hero: {
+		exploreByGenre: "Explore by the genre",
+		season: "Season",
+		episode: "Episode",
+		newEpisode: "New Episode",
+	},
+
+	genres: {
+		title: "Explore by Genre",
+		action: "Action",
+		romance: "Romance",
+		comedy: "Comedy",
+		horror: "Horror",
+		sciFi: "Sci-Fi",
+		drama: "Drama",
+		adventure: "Adventure",
+		animation: "Animation",
+		thriller: "Thriller",
+		fantasy: "Fantasy",
+		documentary: "Documentary",
+		war: "War",
+		music: "Music",
+		family: "Family",
+		mystery: "Mystery",
+		history: "History",
+	},
+
+	player: {
+		play: "Play",
+		pause: "Pause",
+		mute: "Mute",
+		unmute: "Unmute",
+		fullscreen: "Fullscreen",
+		exitFullscreen: "Exit Fullscreen",
+		settings: "Settings",
+		quality: "Quality",
+		speed: "Speed",
+		subtitles: "Subtitles",
+		nextEpisode: "Next Episode",
+		previousEpisode: "Previous Episode",
+		selectServer: "Select Server",
+		server: "Server",
+	},
+
+	time: {
+		justNow: "Just now",
+		minutesAgo: "minutes ago",
+		hoursAgo: "hours ago",
+		daysAgo: "days ago",
+		weeksAgo: "weeks ago",
+		monthsAgo: "months ago",
+		yearsAgo: "years ago",
+	},
+
+	messages: {
+		addedToWatchlist: "Added to watchlist",
+		removedFromWatchlist: "Removed from watchlist",
+		shareSuccess: "Link copied to clipboard",
+		errorOccurred: "An error occurred",
+		tryAgain: "Please try again",
+		noMoviesFound: "No movies found",
+		endOfList: "End of list",
 	},
 };
 
@@ -193,3 +379,6 @@ export function t(key: string, lang: Language): string {
 
 	return typeof value === "string" ? value : key;
 }
+
+// Export translations for direct access
+export { vi, en, translations };

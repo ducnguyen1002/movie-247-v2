@@ -9,6 +9,7 @@ export interface Translations {
 		tvShows: string;
 		search: string;
 		about: string;
+		animation: string;
 	};
 
 	// Common
@@ -21,6 +22,12 @@ export interface Translations {
 		next: string;
 		page: string;
 		of: string;
+		playNow: string;
+		watchTrailer: string;
+		addWatchlist: string;
+		removeWatchlist: string;
+		share: string;
+		download: string;
 	};
 
 	// Movie details
@@ -38,6 +45,9 @@ export interface Translations {
 		quality: string;
 		language: string;
 		status: string;
+		relatedMovies: string;
+		comments: string;
+		synopsis: string;
 	};
 
 	// Search
@@ -46,6 +56,14 @@ export interface Translations {
 		title: string;
 		resultsFor: string;
 		noResults: string;
+		filterByGenre: string;
+		filterByYear: string;
+		filterByCountry: string;
+		sortBy: string;
+		newest: string;
+		oldest: string;
+		mostViewed: string;
+		topRated: string;
 	};
 
 	// Auth
@@ -60,6 +78,9 @@ export interface Translations {
 		hasAccount: string;
 		loginButton: string;
 		registerButton: string;
+		logout: string;
+		profile: string;
+		settings: string;
 	};
 
 	// About
@@ -80,14 +101,91 @@ export interface Translations {
 		terms: string;
 		privacy: string;
 		copyright: string;
+		followUs: string;
 	};
 
-	// Categories
+	// Categories / Sections
 	categories: {
 		newUpdates: string;
 		trending: string;
 		popular: string;
 		recommended: string;
+		continueWatching: string;
+		yourWatchlist: string;
+		yourLikes: string;
+		topRated: string;
+		popularThisWeek: string;
+		featuredMovies: string;
+		latestEpisodes: string;
+	};
+
+	// Hero / Banner
+	hero: {
+		exploreByGenre: string;
+		season: string;
+		episode: string;
+		newEpisode: string;
+	};
+
+	// Genres
+	genres: {
+		title: string;
+		action: string;
+		romance: string;
+		comedy: string;
+		horror: string;
+		sciFi: string;
+		drama: string;
+		adventure: string;
+		animation: string;
+		thriller: string;
+		fantasy: string;
+		documentary: string;
+		war: string;
+		music: string;
+		family: string;
+		mystery: string;
+		history: string;
+	};
+
+	// Player
+	player: {
+		play: string;
+		pause: string;
+		mute: string;
+		unmute: string;
+		fullscreen: string;
+		exitFullscreen: string;
+		settings: string;
+		quality: string;
+		speed: string;
+		subtitles: string;
+		nextEpisode: string;
+		previousEpisode: string;
+		selectServer: string;
+		server: string;
+	};
+
+	// Time / Date
+	time: {
+		justNow: string;
+		minutesAgo: string;
+		hoursAgo: string;
+		daysAgo: string;
+		weeksAgo: string;
+		monthsAgo: string;
+		yearsAgo: string;
+	};
+
+	// Messages
+	messages: {
+		addedToWatchlist: string;
+		removedFromWatchlist: string;
+		shareSuccess: string;
+		errorOccurred: string;
+		tryAgain: string;
+		noMoviesFound: string;
+		endOfList: string;
 	};
 }
 
@@ -102,6 +200,9 @@ export function getCurrentLanguage(): Language {
 export function setLanguage(lang: Language): void {
 	if (typeof window === "undefined") return;
 	localStorage.setItem("language", lang);
+	// Update HTML lang attribute
+	document.documentElement.setAttribute("lang", lang);
+	// Dispatch event for components to react
 	window.dispatchEvent(
 		new CustomEvent("languagechange", { detail: { language: lang } }),
 	);

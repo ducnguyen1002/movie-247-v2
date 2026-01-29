@@ -1,0 +1,277 @@
+---
+// This component initializes GSAP animations globally
+---
+
+<script>
+  import { gsap } from 'gsap';
+
+  // Initialize animations when DOM is ready
+  document.addEventListener('DOMContentLoaded', initAnimations);
+  
+  // Also init on Astro page transitions
+  document.addEventListener('astro:page-load', initAnimations);
+
+  function initAnimations() {
+    // Button click animations
+    initButtonAnimations();
+    
+    // Movie card animations
+    initMovieCardAnimations();
+    
+    // Hover effects
+    initHoverEffects();
+    
+    // Page entrance
+    initPageEntrance();
+  }
+
+  /**
+   * Button click pulse animation
+   */
+  function initButtonAnimations() {
+    const buttons = document.querySelectorAll('button:not([data-gsap-init]), .btn:not([data-gsap-init]), .btn-primary:not([data-gsap-init]), .btn-genre:not([data-gsap-init])');
+    
+    buttons.forEach(btn => {
+      btn.setAttribute('data-gsap-init', 'true');
+      
+      btn.addEventListener('click', function(this: HTMLElement) {
+        gsap.timeline()
+          .to(this, {
+            scale: 0.92,
+            duration: 0.08,
+            ease: 'power2.out'
+          })
+          .to(this, {
+            scale: 1,
+            duration: 0.25,
+            ease: 'elastic.out(1, 0.4)'
+          });
+      });
+    });
+  }
+
+  /**
+   * Movie card click and hover animations
+   */
+  function initMovieCardAnimations() {
+    const movieCards = document.querySelectorAll('.movie-card:not([data-gsap-init]), .ranking-card:not([data-gsap-init]), .continue-card:not([data-gsap-init]), .small-movie-card:not([data-gsap-init]), .genre-card:not([data-gsap-init])');
+    
+    movieCards.forEach(card => {
+      const cardEl = card as HTMLElement;
+      cardEl.setAttribute('data-gsap-init', 'true');
+      
+      // Hover enter
+      cardEl.addEventListener('mouseenter', () => {
+        gsap.to(cardEl, {
+          scale: 1.04,
+          y: -8,
+          duration: 0.35,
+          ease: 'power2.out'
+        });
+        
+        // Animate overlay if exists
+        const overlay = cardEl.querySelector('.movie-card__overlay, .card__overlay');
+        if (overlay) {
+          gsap.to(overlay, {
+            opacity: 1,
+            duration: 0.3
+          });
+        }
+        
+        // Animate image
+        const img = cardEl.querySelector('img');
+        if (img) {
+          gsap.to(img, {
+            scale: 1.1,
+            duration: 0.4,
+            ease: 'power2.out'
+          });
+        }
+      });
+      
+      // Hover leave
+      cardEl.addEventListener('mouseleave', () => {
+        gsap.to(cardEl, {
+          scale: 1,
+          y: 0,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+        
+        const overlay = cardEl.querySelector('.movie-card__overlay, .card__overlay');
+        if (overlay) {
+          gsap.to(overlay, {
+            opacity: 0,
+            duration: 0.3
+          });
+        }
+        
+        const img = cardEl.querySelector('img');
+        if (img) {
+          gsap.to(img, {
+            scale: 1,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        }
+      });
+      
+      // Click effect
+      cardEl.addEventListener('click', function(this: HTMLElement) {
+        gsap.timeline()
+          .to(this, {
+            scale: 0.96,
+            duration: 0.1,
+            ease: 'power2.in'
+          })
+          .to(this, {
+            scale: 1.04,
+            duration: 0.15,
+            ease: 'power2.out'
+          })
+          .to(this, {
+            scale: 1,
+            y: 0,
+            duration: 0.2,
+            ease: 'power2.out'
+          });
+      });
+    });
+  }
+
+  /**
+   * Generic hover effects
+   */
+  function initHoverEffects() {
+    // Social links
+    document.querySelectorAll('.social-link:not([data-gsap-init])').forEach(link => {
+      link.setAttribute('data-gsap-init', 'true');
+      
+      link.addEventListener('mouseenter', () => {
+        gsap.to(link, {
+          scale: 1.25,
+          rotation: 8,
+          duration: 0.3,
+          ease: 'back.out(1.5)'
+        });
+      });
+      
+      link.addEventListener('mouseleave', () => {
+        gsap.to(link, {
+          scale: 1,
+          rotation: 0,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      });
+    });
+    
+    // View all links
+    document.querySelectorAll('.view-all:not([data-gsap-init])').forEach(link => {
+      link.setAttribute('data-gsap-init', 'true');
+      
+      link.addEventListener('mouseenter', () => {
+        gsap.to(link, {
+          x: 5,
+          color: 'var(--color-primary)',
+          duration: 0.2,
+          ease: 'power2.out'
+        });
+      });
+      
+      link.addEventListener('mouseleave', () => {
+        gsap.to(link, {
+          x: 0,
+          color: '',
+          duration: 0.2
+        });
+      });
+    });
+    
+    // Carousel nav buttons
+    document.querySelectorAll('.nav-btn:not([data-gsap-init]), .genre-nav-arrow:not([data-gsap-init])').forEach(btn => {
+      btn.setAttribute('data-gsap-init', 'true');
+      
+      btn.addEventListener('mouseenter', () => {
+        gsap.to(btn, {
+          scale: 1.15,
+          duration: 0.2,
+          ease: 'back.out(1.5)'
+        });
+      });
+      
+      btn.addEventListener('mouseleave', () => {
+        gsap.to(btn, {
+          scale: 1,
+          duration: 0.2
+        });
+      });
+      
+      btn.addEventListener('click', function(this: HTMLElement) {
+        gsap.timeline()
+          .to(this, { scale: 0.9, duration: 0.1 })
+          .to(this, { scale: 1.15, duration: 0.2, ease: 'elastic.out(1, 0.5)' })
+          .to(this, { scale: 1, duration: 0.15 });
+      });
+    });
+  }
+
+  /**
+   * Page entrance animations
+   */
+  function initPageEntrance() {
+    // Fade in main content
+    const main = document.querySelector('main');
+    if (main && !main.hasAttribute('data-gsap-entered')) {
+      main.setAttribute('data-gsap-entered', 'true');
+      
+      gsap.fromTo(main,
+        { opacity: 0.5 },
+        { opacity: 1, duration: 0.4, ease: 'power2.out' }
+      );
+    }
+    
+    // Stagger animate carousel items
+    document.querySelectorAll('.carousel-track:not([data-gsap-entered]), .ranking-track:not([data-gsap-entered]), .continue-track:not([data-gsap-entered]), .small-track:not([data-gsap-entered])').forEach(track => {
+      track.setAttribute('data-gsap-entered', 'true');
+      const items = track.children;
+      
+      gsap.fromTo(items,
+        {
+          opacity: 0,
+          y: 20,
+          scale: 0.95
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.05,
+          ease: 'power2.out'
+        }
+      );
+    });
+    
+    // Hero content animation
+    const heroContent = document.querySelector('.hero__content:not([data-gsap-entered]), .genre-hero__content:not([data-gsap-entered])');
+    if (heroContent) {
+      heroContent.setAttribute('data-gsap-entered', 'true');
+      
+      gsap.fromTo(heroContent.children,
+        {
+          opacity: 0,
+          y: 40
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.12,
+          delay: 0.2,
+          ease: 'power2.out'
+        }
+      );
+    }
+  }
+</script>

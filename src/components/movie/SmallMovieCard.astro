@@ -1,0 +1,146 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  poster: string;
+  year?: number;
+  rating?: number;
+}
+
+const { id, title, poster, year, rating } = Astro.props;
+---
+
+<a href={`/movies/${id}`} class="small-card">
+  <div class="small-card__poster">
+    <img src={poster} alt={title} loading="lazy"/>
+    <div class="small-card__overlay">
+      <button class="play-btn" aria-label="Xem phim">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="small-card__info">
+    <h3 class="small-card__title">{title}</h3>
+    {(rating || year) && (
+      <div class="small-card__meta">
+        {rating && (
+          <span class="small-card__rating">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {rating.toFixed(1)}
+          </span>
+        )}
+        {rating && year && <span class="small-card__dot">•</span>}
+        {year && <span>{year}</span>}
+      </div>
+    )}
+  </div>
+</a>
+
+<style>
+  .small-card {
+    display: block;
+    transition: transform var(--transition-normal);
+    flex-shrink: 0;
+  }
+
+  .small-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .small-card:hover .small-card__overlay {
+    opacity: 1;
+  }
+
+  .small-card:hover img {
+    transform: scale(1.05);
+  }
+
+  /* Poster */
+  .small-card__poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .small-card__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .small-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .play-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-background);
+    transition: transform var(--transition-fast);
+  }
+
+  .play-btn:hover {
+    transform: scale(1.1);
+  }
+
+  /* Info */
+  .small-card__info {
+    padding: var(--spacing-xs) 0;
+  }
+
+  .small-card__title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+  }
+
+  .small-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+
+  .small-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-rating);
+  }
+
+  .small-card__rating svg {
+    fill: var(--color-rating);
+    width: 8px;
+    height: 8px;
+  }
+
+  .small-card__dot {
+    font-size: 6px;
+  }
+</style>

@@ -1,0 +1,692 @@
+---
+import { getImageUrl } from '../../lib/movieService';
+import { useTranslations } from '../../lib/useTranslations';
+
+interface Movie {
+  slug: string;
+  name: string;
+  year?: number;
+  time?: string;
+  poster_url?: string;
+  thumb_url?: string;
+  category?: { name: string }[];
+}
+
+interface GenreWithMovies {
+  name: string;
+  slug: string;
+  movies: Movie[];
+}
+
+interface Props {
+  title?: string;
+  genresWithMovies: GenreWithMovies[];
+}
+
+// Get translations
+const langCookie = Astro.cookies.get('language');
+const { t, translations } = useTranslations(langCookie?.value);
+
+const { title = translations.hero.exploreByGenre, genresWithMovies } = Astro.props;
+
+// Get first movie from each genre for the genre card image
+const genreData = genresWithMovies.map((genre, index) => {
+  const firstMovie = genre.movies[0];
+  return {
+    name: genre.name,
+    slug: genre.slug,
+    image: firstMovie ? getImageUrl(firstMovie.thumb_url || firstMovie.poster_url) : '',
+    movie: firstMovie,
+    isActive: index === 0,
+  };
+});
+
+// Featured movie (first genre's first movie)
+const featuredGenre = genreData[0];
+const featuredMovie = featuredGenre?.movie;
+---
+
+<section class="genre-hero" id="genreHero">
+  <!-- Backdrop Slides -->
+  <div class="genre-hero__backdrops">
+    {genreData.map((genre, index) => (
+      <div 
+        class={`genre-backdrop ${index === 0 ? 'active' : ''}`} 
+        data-genre={genre.slug}
+      >
+        {genre.movie && (
+          <>
+            <img 
+              src={getImageUrl(genre.movie.thumb_url || genre.movie.poster_url)} 
+              alt={genre.movie.name} 
+            />
+            <div class="genre-backdrop__gradient"></div>
+          </>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="genre-hero__content">
+      <!-- Genre Label -->
+      <span class="genre-hero__label">{title}</span>
+
+      <!-- Movie Info Slides -->
+      <div class="genre-hero__movies">
+        {genreData.map((genre, index) => (
+          <div 
+            class={`genre-movie-info ${index === 0 ? 'active' : ''}`}
+            data-genre={genre.slug}
+          >
+            {genre.movie && (
+              <>
+                <h2 class="genre-hero__title">{genre.movie.name}</h2>
+                <div class="genre-hero__meta">
+                  <span class="genre-hero__rating">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    {(4 + Math.random() * 1).toFixed(1)}
+                  </span>
+                  <span class="genre-hero__divider">|</span>
+                  <span>{genre.movie.time || "2h30m"}</span>
+                  <span class="genre-hero__dot">•</span>
+                  <span>{genre.movie.year || 2024}</span>
+                  <span class="genre-hero__dot">•</span>
+                  {genre.movie.category?.slice(0, 2).map((cat, i) => (
+                    <span>{cat.name}{i === 0 && genre.movie!.category!.length > 1 ? ' • ' : ''}</span>
+                  ))}
+                </div>
+                <div class="genre-hero__actions">
+                  <a href={`/watch/${genre.movie.slug}`} class="btn-genre btn-genre--primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    {translations.common.playNow}
+                  </a>
+                  <button class="btn-genre btn-genre--outline">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="12" y1="8" x2="12" y2="16"/>
+                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    {translations.common.addWatchlist}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <!-- Navigation Arrows -->
+      <div class="genre-hero__nav">
+        <button class="genre-nav-arrow genre-nav-prev" aria-label="Previous">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <button class="genre-nav-arrow genre-nav-next" aria-label="Next">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+     <!-- Genre Cards -->
+  <div class="genre-cards-wrapper container">
+    <div class="genre-cards-track">
+      {genreData.map((genre, index) => (
+        <button 
+          class={`genre-card ${index === 0 ? 'genre-card--active' : ''}`}
+          data-genre={genre.slug}
+          data-index={index}
+        >
+          <div class="genre-card__bg">
+            <img 
+              src={genre.image || `https://picsum.photos/seed/${genre.slug}/400/300`} 
+              alt={genre.name} 
+              loading="lazy"
+            />
+            <div class="genre-card__overlay"></div>
+          </div>
+          <span class="genre-card__name">{genre.name}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+  </div>
+
+  <!-- Dots Navigation -->
+  <div class="genre-hero__dots">
+    {genreData.map((genre, index) => (
+      <button 
+        class={`genre-dot ${index === 0 ? 'active' : ''}`}
+        data-genre={genre.slug}
+        aria-label={genre.name}
+      ></button>
+    ))}
+  </div>
+
+ 
+</section>
+
+<style>
+  .genre-hero {
+    position: relative;
+    min-height: 600px;
+    overflow: hidden;
+  }
+
+  /* Backdrops */
+  .genre-hero__backdrops {
+    position: absolute;
+    inset: 0;
+  }
+
+  .genre-backdrop {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .genre-backdrop.active {
+    opacity: 1;
+  }
+
+  .genre-backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .genre-backdrop__gradient {
+    position: absolute;
+    inset: 0;
+    background: 
+      linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(0, 0, 0, 0.7) 35%,
+        rgba(0, 0, 0, 0.3) 60%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to top,
+        var(--color-background) 0%,
+        rgba(0, 0, 0, 0.6) 30%,
+        transparent 60%
+      );
+  }
+
+  /* Content */
+  .genre-hero__content {
+    position: relative;
+    z-index: 10;
+    max-width: 450px;
+    padding: var(--spacing-3xl) 0;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .genre-hero__label {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* Movie Info */
+  .genre-hero__movies {
+    position: relative;
+    min-height: 180px;
+  }
+
+  .genre-movie-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  .genre-movie-info.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+  }
+
+  .genre-hero__title {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.1;
+    margin-bottom: var(--spacing-md);
+    color: #FFFFFF;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .genre-hero__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .genre-hero__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-rating);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .genre-hero__rating svg {
+    fill: var(--color-rating);
+  }
+
+  .genre-hero__divider {
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 4px;
+  }
+
+  .genre-hero__dot {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Actions */
+  .genre-hero__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .btn-genre {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: 10px 20px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+  }
+
+  .btn-genre--primary {
+    background: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  .btn-genre--primary:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(29, 185, 84, 0.4);
+  }
+
+  .btn-genre--outline {
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .btn-genre--outline:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Navigation Arrows */
+  .genre-hero__nav {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+  .genre-nav-arrow {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .genre-nav-arrow:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Dots */
+  .genre-hero__dots {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-2xl);
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    z-index: 20;
+  }
+
+  .genre-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+  }
+
+  .genre-dot:hover {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .genre-dot.active {
+    background: #FFFFFF;
+    height: 24px;
+  }
+
+  /* Genre Cards */
+  .genre-cards-wrapper {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 0 var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .genre-cards-track {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+    padding: 4px;
+    margin: -4px;
+  }
+
+  .genre-cards-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Genre Card */
+  .genre-card {
+    position: relative;
+    flex: 0 0 140px;
+    height: 85px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+    padding: 0;
+    background: none;
+  }
+
+  .genre-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .genre-card:hover .genre-card__bg img {
+    transform: scale(1.1);
+  }
+
+  .genre-card--active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 16px rgba(29, 185, 84, 0.4);
+  }
+
+  .genre-card__bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .genre-card__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .genre-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.2) 60%,
+      transparent 100%
+    );
+  }
+
+  .genre-card__name {
+    position: absolute;
+    bottom: var(--spacing-xs);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: #FFFFFF;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    z-index: 2;
+    white-space: nowrap;
+  }
+
+  /* Light Theme */
+  [data-theme="light"] .genre-backdrop__gradient {
+    background: 
+      linear-gradient(
+        to right,
+        rgba(248, 249, 250, 0.98) 0%,
+        rgba(248, 249, 250, 0.8) 35%,
+        rgba(248, 249, 250, 0.4) 55%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to top,
+        var(--color-background) 0%,
+        rgba(248, 249, 250, 0.8) 30%,
+        transparent 60%
+      );
+  }
+
+  [data-theme="light"] .genre-hero__title {
+    color: var(--color-text-primary);
+    text-shadow: none;
+  }
+
+  [data-theme="light"] .genre-hero__meta {
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .genre-hero__divider,
+  [data-theme="light"] .genre-hero__dot {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="light"] .btn-genre--outline {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  [data-theme="light"] .genre-nav-arrow {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .genre-dot {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  [data-theme="light"] .genre-dot.active {
+    background: var(--color-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .genre-hero {
+      min-height: 450px;
+    }
+
+    .genre-hero__content {
+      min-height: 450px;
+    }
+
+    .genre-hero__title {
+      font-size: 2rem;
+    }
+
+    .genre-hero__dots {
+      display: none;
+    }
+
+    .genre-card {
+      flex: 0 0 120px;
+      height: 75px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .genre-hero {
+      min-height: 400px;
+    }
+
+    .genre-hero__content {
+      min-height: 400px;
+      padding: var(--spacing-2xl) 0;
+    }
+
+    .genre-hero__title {
+      font-size: 1.5rem;
+    }
+
+    .btn-genre {
+      padding: 8px 16px;
+      font-size: var(--font-size-xs);
+    }
+
+    .genre-cards-wrapper {
+      bottom: var(--spacing-md);
+      padding: 0 var(--spacing-md);
+    }
+
+    .genre-card {
+      flex: 0 0 100px;
+      height: 65px;
+    }
+
+    .genre-card__name {
+      font-size: 10px;
+    }
+
+    .genre-cards-nav {
+      width: 36px;
+      height: 36px;
+    }
+
+    .genre-cards-nav svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+</style>
+
+<script>
+  const section = document.getElementById('genreHero');
+  if (section) {
+    const backdrops = section.querySelectorAll('.genre-backdrop');
+    const movieInfos = section.querySelectorAll('.genre-movie-info');
+    const dots = section.querySelectorAll('.genre-dot');
+    const genreCards = section.querySelectorAll('.genre-card');
+    const prevBtn = section.querySelector('.genre-nav-prev');
+    const nextBtn = section.querySelector('.genre-nav-next');
+    const cardsNav = section.querySelector('.genre-cards-nav');
+    const cardsTrack = section.querySelector('.genre-cards-track') as HTMLElement;
+
+    let currentIndex = 0;
+    const totalGenres = genreCards.length;
+
+    function goToGenre(index: number) {
+      // Update backdrops
+      backdrops.forEach((bg, i) => {
+        bg.classList.toggle('active', i === index);
+      });
+
+      // Update movie info
+      movieInfos.forEach((info, i) => {
+        info.classList.toggle('active', i === index);
+      });
+
+      // Update dots
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+
+      // Update cards
+      genreCards.forEach((card, i) => {
+        card.classList.toggle('genre-card--active', i === index);
+      });
+
+      currentIndex = index;
+    }
+
+    // Genre card clicks
+    genreCards.forEach((card, index) => {
+      card.addEventListener('click', () => {
+        goToGenre(index);
+      });
+    });
+
+    // Dot clicks
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        goToGenre(index);
+      });
+    });
+
+    // Arrow navigation
+    prevBtn?.addEventListener('click', () => {
+      const newIndex = (currentIndex - 1 + totalGenres) % totalGenres;
+      goToGenre(newIndex);
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      const newIndex = (currentIndex + 1) % totalGenres;
+      goToGenre(newIndex);
+    });
+
+    // Cards track scroll
+    cardsNav?.addEventListener('click', () => {
+      cardsTrack?.scrollBy({ left: 200, behavior: 'smooth' });
+    });
+  }
+</script>

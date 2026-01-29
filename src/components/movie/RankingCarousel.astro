@@ -1,5 +1,5 @@
 ---
-import MovieCard from './MovieCard.astro';
+import RankingCard from './RankingCard.astro';
 import { getImageUrl } from '../../lib/movieService';
 import { useTranslations } from '../../lib/useTranslations';
 
@@ -7,17 +7,16 @@ interface Props {
   title: string;
   movies: any[];
   viewAllLink?: string;
-  useApi?: boolean;
 }
 
-const { title, movies, viewAllLink, useApi = false } = Astro.props;
+const { title, movies, viewAllLink } = Astro.props;
 
 // Get translations
 const langCookie = Astro.cookies.get('language');
 const { translations } = useTranslations(langCookie?.value);
 ---
 
-<section class="carousel-section">
+<section class="ranking-section">
   <div class="container">
     <div class="carousel-header">
       <h2 class="carousel-title">{title}</h2>
@@ -45,18 +44,16 @@ const { translations } = useTranslations(langCookie?.value);
       </div>
     </div>
 
-    <div class="carousel-track">
+    <div class="carousel-track ranking-track">
       {
-        movies.map((movie: any) => (
-          <MovieCard
+        movies.slice(0, 10).map((movie: any, index: number) => (
+          <RankingCard
             id={movie.slug}
-            title={movie.origin_name || movie.name}
-            titleVi={movie.name}
-            year={movie.year || 2024}
-            rating={8.0}
+            rank={index + 1}
+            title={movie.name}
             poster={getImageUrl(movie.poster_url)}
-            genres={movie.category?.slice(0, 2).map((c: any) => c.name) || []}
-            duration={movie.time || movie.episode_current || ''}
+            rating={8.0 + Math.random() * 1.5}
+            year={movie.year || 2024}
           />
         ))
       }
@@ -65,7 +62,7 @@ const { translations } = useTranslations(langCookie?.value);
 </section>
 
 <style>
-  .carousel-section {
+  .ranking-section {
     padding: var(--spacing-lg) 0;
   }
 
@@ -124,62 +121,57 @@ const { translations } = useTranslations(langCookie?.value);
     color: var(--color-text-primary);
   }
 
-  .carousel-track {
+  .ranking-track {
     display: flex;
-    gap: var(--spacing-md);
+    gap: var(--spacing-lg);
     overflow-x: auto;
     scroll-behavior: smooth;
     scrollbar-width: none;
     padding-bottom: var(--spacing-sm);
   }
 
-  .carousel-track::-webkit-scrollbar {
+  .ranking-track::-webkit-scrollbar {
     display: none;
   }
 
-  .carousel-track > :global(*) {
-    flex: 0 0 calc((100% - 5 * var(--spacing-md)) / 6);
-    min-width: 150px;
+  .ranking-track > :global(*) {
+    flex: 0 0 calc((100% - 3 * var(--spacing-lg)) / 4);
+    min-width: 220px;
   }
 
   /* Responsive */
   @media (max-width: 1200px) {
-    .carousel-track > :global(*) {
-      flex: 0 0 calc((100% - 4 * var(--spacing-md)) / 5);
-    }
-  }
-
-  @media (max-width: 992px) {
-    .carousel-track > :global(*) {
-      flex: 0 0 calc((100% - 3 * var(--spacing-md)) / 4);
+    .ranking-track > :global(*) {
+      flex: 0 0 calc((100% - 2 * var(--spacing-lg)) / 3);
     }
   }
 
   @media (max-width: 768px) {
-    .carousel-track > :global(*) {
-      flex: 0 0 calc((100% - 2 * var(--spacing-md)) / 3);
+    .ranking-track > :global(*) {
+      flex: 0 0 calc((100% - var(--spacing-lg)) / 2);
+      min-width: 180px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ranking-track > :global(*) {
+      flex: 0 0 80%;
+      min-width: 160px;
     }
 
     .view-all {
       display: none;
     }
   }
-
-  @media (max-width: 480px) {
-    .carousel-track > :global(*) {
-      flex: 0 0 calc((100% - var(--spacing-md)) / 2);
-      min-width: 130px;
-    }
-  }
 </style>
 
 <script>
-  document.querySelectorAll('.carousel-section').forEach(section => {
-    const track = section.querySelector('.carousel-track') as HTMLElement;
+  document.querySelectorAll('.ranking-section').forEach(section => {
+    const track = section.querySelector('.ranking-track') as HTMLElement;
     const prevBtn = section.querySelector('.nav-prev');
     const nextBtn = section.querySelector('.nav-next');
     
-    const scrollAmount = 300;
+    const scrollAmount = 280;
 
     prevBtn?.addEventListener('click', () => {
       track?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });

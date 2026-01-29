@@ -1,11 +1,17 @@
 ---
+import { useTranslations } from '../../lib/useTranslations';
+
 const currentYear = new Date().getFullYear();
 
+// Get translations
+const langCookie = Astro.cookies.get('language');
+const { translations } = useTranslations(langCookie?.value);
+
 const footerLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Discover', href: '/movies' },
-  { label: 'Influence', href: '/about' },
-  { label: 'Release', href: '/movies' },
+  { label: translations.nav.home, href: '/' },
+  { label: translations.nav.movies, href: '/movies' },
+  { label: translations.nav.tvShows, href: '/tv-shows' },
+  { label: translations.nav.about, href: '/about' },
 ];
 ---
 
@@ -15,7 +21,7 @@ const footerLinks = [
       <!-- Brand & Tagline -->
       <div class="footer__brand">
         <p class="footer__tagline">
-          Our platform is trusted by millions & features best updated movies all around the world.
+          {translations.footer.description}
         </p>
       </div>
 
@@ -59,11 +65,10 @@ const footerLinks = [
     <!-- Bottom -->
     <div class="footer__bottom">
       <div class="footer__legal">
-        <a href="/privacy">Privacy policy</a>
-        <a href="/terms">Term of service</a>
-        <a href="#">Language</a>
+        <a href="/privacy">{translations.footer.privacy}</a>
+        <a href="/terms">{translations.footer.terms}</a>
       </div>
-      <p class="footer__copyright">© {currentYear}</p>
+      <p class="footer__copyright">{translations.footer.copyright.replace('2024', currentYear.toString())}</p>
     </div>
   </div>
 </footer>

@@ -22,7 +22,7 @@ const navLinks = [
 ];
 ---
 
-<header class:list={['header', { 'header--transparent': isTransparent }]}>
+<header class:list={['header']}>
   <div class="container">
     <div class="header__inner">
       <!-- Logo -->
@@ -50,9 +50,22 @@ const navLinks = [
       <!-- Actions -->
       <div class="header__actions">
         <!-- Language Switcher -->
-        <button class="header-btn lang-btn" aria-label="Chuyển ngôn ngữ" data-lang-switcher>
-          <span class="lang-text">VI</span>
-        </button>
+        <div class="language-wrapper">
+          <button class="header-btn lang-btn" aria-label="Chuyển ngôn ngữ" id="headerLangBtn">
+            <span class="lang-flag">{lang === 'vi' ? '🇻🇳' : '🇺🇸'}</span>
+            <span class="lang-text">{lang === 'vi' ? 'VI' : 'EN'}</span>
+          </button>
+          <div class="lang-dropdown" id="headerLangDropdown">
+            <button class={`lang-option ${lang === 'vi' ? 'active' : ''}`} data-lang="vi">
+              <span>🇻🇳</span>
+              <span>Tiếng Việt</span>
+            </button>
+            <button class={`lang-option ${lang === 'en' ? 'active' : ''}`} data-lang="en">
+              <span>🇺🇸</span>
+              <span>English</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Theme Switcher -->
         <button class="header-btn theme-btn" aria-label="Chuyển theme" data-theme-switcher>
@@ -132,20 +145,13 @@ const navLinks = [
     border-bottom: 1px solid var(--color-border);
   }
 
-  .header--transparent {
-    background: transparent;
-    backdrop-filter: none;
-    border-bottom: none;
-  }
+
 
   /* Dark theme specific header */
   [data-theme="dark"] .header {
     background: rgba(0, 0, 0, 0.95);
   }
 
-  [data-theme="dark"] .header--transparent {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
-  }
 
   .header__inner {
     display: flex;
@@ -227,24 +233,86 @@ const navLinks = [
   }
 
   /* Language & Theme Buttons */
-  .lang-btn .lang-text {
+  .language-wrapper {
+    position: relative;
+  }
+
+  .lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+  }
+
+  .lang-flag {
+    font-size: 14px;
+  }
+
+  .lang-text {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
   }
 
-  .theme-icon--sun {
+  .lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all var(--transition-fast);
+    z-index: 100;
+    min-width: 130px;
+    overflow: hidden;
+  }
+
+  .lang-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .lang-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .lang-option:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+
+  .lang-option.active {
+    color: var(--color-primary);
+  }
+
+  /* Dark theme - show moon icon */
+  html[data-theme="light"] .theme-icon--sun {
     display: none;
   }
-
-  .theme-icon--moon {
+  html[data-theme="light"] .theme-icon--moon {
     display: block;
   }
 
-  [data-theme="light"] .theme-icon--sun {
+  /* Light theme - show sun icon */
+  html[data-theme="dark"] .theme-icon--sun {
     display: block;
   }
-
-  [data-theme="light"] .theme-icon--moon {
+  html[data-theme="dark"] .theme-icon--moon {
     display: none;
   }
 
@@ -310,6 +378,44 @@ const navLinks = [
       display: block;
     }
   }
+
+
+  /* Light mode header styles */
+  [data-theme="light"] .header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+  }
+
+  [data-theme="light"] .header .header__logo,
+  [data-theme="light"] .header .logo-text {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="light"] .header .nav-link {
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .header .nav-link:hover,
+  [data-theme="light"] .header .nav-link--active {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="light"] .header .header-btn {
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .header .header-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-surface-hover);
+  }
+
+  [data-theme="light"] .header .lang-btn .lang-text {
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="light"] .header .mobile-menu-btn {
+    color: var(--color-text-primary);
+  }
 </style>
 
 <script>
@@ -342,9 +448,10 @@ const navLinks = [
     lastScroll = currentScroll;
   });
 
-  // Language switcher - using cookies
-  const langBtn = document.querySelector('[data-lang-switcher]');
-  const langText = langBtn?.querySelector('.lang-text');
+  // Language switcher - using dropdown and cookies
+  const langBtn = document.getElementById('headerLangBtn');
+  const langDropdown = document.getElementById('headerLangDropdown');
+  const langOptions = langDropdown?.querySelectorAll('.lang-option');
   
   function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
@@ -359,26 +466,30 @@ const navLinks = [
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
   }
   
-  function getCurrentLang(): string {
-    const lang = getCookie('language');
-    return (lang === 'en' || lang === 'vi') ? lang : 'vi';
-  }
-  
-  function updateLangButton() {
-    const currentLang = getCurrentLang();
-    if (langText) {
-      langText.textContent = currentLang.toUpperCase();
-    }
-  }
-  
-  updateLangButton();
-  
-  langBtn?.addEventListener('click', () => {
-    const currentLang = getCurrentLang();
-    const newLang = currentLang === 'vi' ? 'en' : 'vi';
-    setCookie('language', newLang);
-    // Reload page to apply translations
-    window.location.reload();
+  // Toggle dropdown
+  langBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    langDropdown?.classList.toggle('show');
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', () => {
+    langDropdown?.classList.remove('show');
+  });
+
+  // Handle language selection
+  langOptions?.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const lang = (option as HTMLElement).dataset.lang;
+      
+      if (lang) {
+        setCookie('language', lang);
+        localStorage.setItem('language', lang);
+        document.documentElement.setAttribute('lang', lang);
+        window.location.reload();
+      }
+    });
   });
 
   // Theme switcher
