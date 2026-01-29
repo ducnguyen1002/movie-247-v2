@@ -47,7 +47,7 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
               <span>{translations.common.playNow || 'Xem ngay'}</span>
             </button>
             <button 
-              class="popup-btn watchlist-btn"
+              class="popup-btn card-watchlist-btn"
               data-movie={JSON.stringify({
                 id,
                 slug: id,
@@ -91,7 +91,7 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
 <script>
   import { toggleWatchlist, isInWatchlist } from '../../lib/watchlist';
 
-  document.querySelectorAll('.watchlist-btn').forEach(btn => {
+  document.querySelectorAll('.card-watchlist-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -280,7 +280,7 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     }
   }
 
-  .watchlist-btn {
+  .card-watchlist-btn {
     width: 32px;
     height: 32px;
     background: rgba(255,255,255,0.1);
@@ -288,12 +288,12 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     border: 1px solid rgba(255,255,255,0.2);
   }
   
-  .watchlist-btn:hover {
+  .card-watchlist-btn:hover {
     background: rgba(255,255,255,0.2);
     border-color: white;
   }
   
-  .watchlist-btn.active {
+  .card-watchlist-btn.active {
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: white;
