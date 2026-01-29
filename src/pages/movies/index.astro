@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import MovieCard from '../../components/movie/MovieCard.astro';
-import { getMoviesByCategory, getMoviesByGenre, getMoviesByNation, getImageUrl } from '../../lib/movieService';
+import { getMoviesByCategory, getMoviesByGenre, getMoviesByNation, searchMoviesByKeyword, getImageUrl } from '../../lib/movieService';
 import { MOVIE_GENRES, MOVIE_NATIONS, MOVIE_CATEGORIES } from '../../lib/constants';
 import { useTranslations, getGenreName, getNationName, getCategoryName } from '../../lib/useTranslations';
 
@@ -14,13 +14,17 @@ const url = Astro.url;
 const genreParam = url.searchParams.get('genre');
 const nationParam = url.searchParams.get('nation');
 const categoryParam = url.searchParams.get('category') || 'phim-le';
+const keywordParam = url.searchParams.get('keyword');
 const pageParam = parseInt(url.searchParams.get('page') || '1');
 
 // Fetch movies based on filters
 let moviesData: any = null;
 let pageTitle = 'Phim Lẻ';
 
-if (genreParam) {
+if (keywordParam) {
+  moviesData = await searchMoviesByKeyword(keywordParam, pageParam);
+  pageTitle = `${translations.nav.search}: "${keywordParam}"`;
+} else if (genreParam) {
   moviesData = await getMoviesByGenre(genreParam, pageParam);
   const genre = MOVIE_GENRES.find(g => g.slug === genreParam);
   pageTitle = genre ? `Thể loại: ${genre.name}` : 'Phim Theo Thể Loại';
@@ -40,7 +44,10 @@ const pagination = moviesData?.data?.params?.pagination || { currentPage: 1, tot
 
 
 // Update pageTitle for i18n
-if (genreParam) {
+// Update pageTitle for i18n
+if (keywordParam) {
+   pageTitle = `${translations.nav.search}: "${keywordParam}"`;
+} else if (genreParam) {
   const genre = MOVIE_GENRES.find(g => g.slug === genreParam);
   pageTitle = genre ? `${translations.movie.genre}: ${getGenreName(genre.slug, lang)}` : translations.genres.title;
 } else if (nationParam) {
@@ -64,7 +71,36 @@ if (genreParam) {
       </div>
 
       <!-- Filters -->
-      <div class="filters">
+      <div class="filters-container">
+        <!-- Search Bar -->
+        <form class="search-form" action="/movies" method="get">
+           <div class="search-input-wrapper">
+            <input 
+              type="text" 
+              name="keyword" 
+              placeholder={translations.nav.search + "..."} 
+              value={keywordParam || ''}
+              class="search-input"
+            />
+            <button type="submit" class="search-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+          </div>
+          {genreParam && <input type="hidden" name="genre" value={genreParam} />}
+          {nationParam && <input type="hidden" name="nation" value={nationParam} />}
+          {/* Allow combining search with genre/nation if needed, or clear them. Usually search is standalone, but keeping context is nice. */}
+        </form>
+        
+        <button id="filter-toggle-btn" class="filter-toggle-btn" aria-label={translations.search.toggleFilters}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+        </button>
+
+        <div id="filters-content" class="filters">
         <!-- Category Filter -->
         <div class="filter-section">
           <label>{translations.movie.status}:</label>
@@ -101,6 +137,7 @@ if (genreParam) {
               <option value={nation.slug} selected={nationParam === nation.slug}>{getNationName(nation.slug, lang)}</option>
             ))}
           </select>
+        </div>
         </div>
       </div>
 
@@ -152,29 +189,77 @@ if (genreParam) {
       )}
 
       <!-- Pagination -->
+      <!-- Pagination -->
       {pagination.totalPages > 1 && (
         <div class="pagination">
+          {/* First Page */}
+          {pageParam > 1 && (
+             <a href={`/movies?${new URLSearchParams({
+              ...(categoryParam && { category: categoryParam }),
+              ...(genreParam && { genre: genreParam }),
+              ...(nationParam && { nation: nationParam }),
+              ...(keywordParam && { keyword: keywordParam }),
+              page: '1'
+            }).toString()}`} class="pagination-btn icon-btn" title="First Page">
+              «
+            </a>
+          )}
+
+          {/* Previous Page */}
           {pageParam > 1 && (
             <a href={`/movies?${new URLSearchParams({
               ...(categoryParam && { category: categoryParam }),
               ...(genreParam && { genre: genreParam }),
               ...(nationParam && { nation: nationParam }),
+              ...(keywordParam && { keyword: keywordParam }),
               page: String(pageParam - 1)
             }).toString()}`} class="pagination-btn">
               ← {translations.common.previous}
             </a>
           )}
           
-          <span class="pagination-info">{translations.common.page} {pageParam} / {pagination.totalPages}</span>
+          <div class="pagination-controls">
+            <span class="pagination-text">{translations.common.page}</span>
+            <form class="pagination-form" action="/movies" method="get">
+              {categoryParam && <input type="hidden" name="category" value={categoryParam} />}
+              {genreParam && <input type="hidden" name="genre" value={genreParam} />}
+              {nationParam && <input type="hidden" name="nation" value={nationParam} />}
+              {keywordParam && <input type="hidden" name="keyword" value={keywordParam} />}
+              <input 
+                type="number" 
+                name="page" 
+                min="1" 
+                max={pagination.totalPages} 
+                value={pageParam} 
+                class="pagination-input"
+              />
+            </form>
+            <span class="pagination-text">/ {pagination.totalPages}</span>
+          </div>
           
+          {/* Next Page */}
           {pageParam < pagination.totalPages && (
             <a href={`/movies?${new URLSearchParams({
               ...(categoryParam && { category: categoryParam }),
               ...(genreParam && { genre: genreParam }),
               ...(nationParam && { nation: nationParam }),
+              ...(keywordParam && { keyword: keywordParam }),
               page: String(pageParam + 1)
             }).toString()}`} class="pagination-btn">
               {translations.common.next} →
+            </a>
+          )}
+
+           {/* Last Page */}
+           {pageParam < pagination.totalPages && (
+            <a href={`/movies?${new URLSearchParams({
+              ...(categoryParam && { category: categoryParam }),
+              ...(genreParam && { genre: genreParam }),
+              ...(nationParam && { nation: nationParam }),
+              ...(keywordParam && { keyword: keywordParam }),
+              page: String(pagination.totalPages)
+            }).toString()}`} class="pagination-btn icon-btn" title="Last Page">
+              »
             </a>
           )}
         </div>
@@ -206,21 +291,113 @@ if (genreParam) {
     font-size: var(--font-size-sm);
   }
 
+  /* Filters Container */
+  .filters-container {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center; /* Vertically align items */
+  }
+
+  /* Search Form */
+  .search-form {
+    flex: 1; /* Take available width */
+    min-width: 200px; /* Minimum width */
+    margin-bottom: 0; /* Remove bottom margin to align with filters */
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    padding-right: 40px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+  }
+
+  .search-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+  }
+
+  .search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    transition: color var(--transition-fast);
+  }
+
+  .search-btn:hover {
+    color: var(--color-primary);
+  }
+
+  /* Filter Toggle Btn */
+  .filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .filter-toggle-btn:hover, .filter-toggle-btn.active {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--color-surface-hover);
+  }
+
   /* Filters */
   .filters {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-lg);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
+    gap: var(--spacing-sm);
+    align-items: center;
+    width: 100%;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--spacing-xs);
+    transition: all var(--transition-normal);
   }
+  
+  .filters.hidden {
+    display: none;
+  }
+
+
 
   .filter-section {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--spacing-sm);
   }
 
@@ -349,6 +526,44 @@ if (genreParam) {
     color: var(--color-text-muted);
   }
 
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .pagination-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .pagination-input {
+    width: 60px;
+    padding: 6px 4px;
+    text-align: center;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    -moz-appearance: textfield;
+  }
+  
+  .pagination-input::-webkit-outer-spin-button,
+  .pagination-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .pagination-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+  }
+
+  .icon-btn {
+    padding: 8px 12px;
+  }
+
   /* Responsive */
   @media (max-width: 1200px) {
     .movies-grid { grid-template-columns: repeat(5, 1fr); }
@@ -371,11 +586,34 @@ if (genreParam) {
 <script>
   const genreSelect = document.getElementById('genre-select') as HTMLSelectElement;
   const nationSelect = document.getElementById('nation-select') as HTMLSelectElement;
+  const filterToggleBtn = document.getElementById('filter-toggle-btn');
+  const filtersContent = document.getElementById('filters-content');
+
+  // Load filter state
+  const isFiltersVisible = localStorage.getItem('filtersVisible') !== 'false'; // Default true
+  if (!isFiltersVisible) {
+    filtersContent?.classList.add('hidden');
+  } else {
+    filterToggleBtn?.classList.add('active');
+  }
+
+  filterToggleBtn?.addEventListener('click', () => {
+    const isHidden = filtersContent?.classList.toggle('hidden');
+    filterToggleBtn.classList.toggle('active', !isHidden);
+    localStorage.setItem('filtersVisible', String(!isHidden));
+  });
 
   function applyFilters() {
     const params = new URLSearchParams();
+    
     if (genreSelect?.value) params.set('genre', genreSelect.value);
     if (nationSelect?.value) params.set('nation', nationSelect.value);
+    
+    // Preserve keyword if exists
+    const urlParams = new URLSearchParams(window.location.search);
+    const keyword = urlParams.get('keyword');
+    if (keyword) params.set('keyword', keyword);
+
     window.location.href = `/movies${params.toString() ? '?' + params.toString() : ''}`;
   }
 

@@ -8,6 +8,7 @@ export interface Translations {
 		movies: string;
 		tvShows: string;
 		search: string;
+		forum: string;
 		about: string;
 		animation: string;
 	};
@@ -56,6 +57,7 @@ export interface Translations {
 		title: string;
 		resultsFor: string;
 		noResults: string;
+		toggleFilters: string;
 		filterByGenre: string;
 		filterByYear: string;
 		filterByCountry: string;

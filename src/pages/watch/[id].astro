@@ -4,6 +4,7 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import VideoPlayer from '../../components/media/VideoPlayer.astro';
+import CommentSection from '../../components/forum/CommentSection.astro';
 import { getMovieDetailBySlug, getNewUpdatedMovies, getImageUrl } from '../../lib/movieService';
 
 const { id } = Astro.params;
@@ -169,6 +170,9 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
             <h4>{translations.movie.synopsis}</h4>
             <div class="synopsis" set:html={movie.content || translations.common.loading} />
           </div>
+
+          <!-- Comments -->
+          <CommentSection targetId={movie.slug} targetType="movie" />
         </div>
 
         <!-- Sidebar -->

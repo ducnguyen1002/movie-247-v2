@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import CommentSection from '../../components/forum/CommentSection.astro';
+import { useTranslations } from '../../lib/useTranslations';
+
+export const prerender = false; // Enable server-side rendering for dynamic routing (or standard mode)
+
+const { id } = Astro.params;
+const langCookie = Astro.cookies.get('language');
+const { translations, t } = useTranslations(langCookie?.value);
+
+const pageTitle = t('nav.forum'); // Initial title
+---
+
+<BaseLayout title={`${pageTitle} - Movie247`}>
+  <Header />
+  
+  <main class="page-content">
+    <div class="container">
+       <div class="back-link">
+         <a href="/forum">← {t('nav.forum')}</a>
+       </div>
+
+       <!-- Thread Content (Client-side rendered from LocalStorage) -->
+       <article class="thread-detail" id="thread-detail-container" data-id={id}>
+          <div class="loading-state">
+             <h1>Đang tải bài viết...</h1>
+          </div>
+       </article>
+
+       <!-- Comments -->
+       <div class="thread-comments">
+          <CommentSection targetId={id || ''} targetType='forum' />
+       </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-content {
+    padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    min-height: 100vh;
+  }
+
+  .back-link {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .back-link a {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-decoration: none; 
+    transition: color 0.2s;
+  }
+  
+  .back-link a:hover { color: var(--color-primary); }
+
+  .thread-detail {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .thread-header {
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .thread-title {
+    font-size: var(--font-size-2xl);
+    font-weight: bold;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .thread-meta {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .thread-body {
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+
+  .not-found {
+    text-align: center;
+    padding: 40px;
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script>
+  // Get ID
+  const container = document.getElementById('thread-detail-container');
+  const threadId = container?.dataset.id;
+
+  if (threadId && container) {
+      const threads = JSON.parse(localStorage.getItem('movie247_threads') || '[]');
+      const thread = threads.find((t: any) => t.id === threadId);
+
+      if (thread) {
+          document.title = `${thread.title} - Movie247`; // Update page title
+          container.innerHTML = `
+            <div class="thread-header">
+               <h1 class="thread-title">${thread.title}</h1>
+               <div class="thread-meta">
+                  Đăng bởi <strong>${thread.author}</strong> • ${new Date(thread.createdAt).toLocaleDateString()}
+               </div>
+            </div>
+            <div class="thread-body">
+               ${thread.content.replace(/\n/g, '<br>')}
+            </div>
+          `;
+      } else {
+          container.innerHTML = `
+             <div class="not-found">
+                <h2>Không tìm thấy bài viết này</h2>
+                <a href="/forum" class="btn btn-primary">Quay lại diễn đàn</a>
+             </div>
+          `;
+      }
+  }
+</script>

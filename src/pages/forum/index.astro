@@ -1,0 +1,340 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import { useTranslations } from '../../lib/useTranslations';
+
+const langCookie = Astro.cookies.get('language');
+const { translations, t } = useTranslations(langCookie?.value);
+
+const pageTitle = t('nav.forum');
+---
+
+<BaseLayout title={`${pageTitle} - Movie247`}>
+  <Header />
+  
+  <main class="page-content">
+    <div class="container">
+      <div class="forum-header">
+        <div>
+          <h1>{t('nav.forum')}</h1>
+          <p>Nơi thảo luận, chia sẻ về phim ảnh</p>
+        </div>
+        <button id="create-thread-btn" class="btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Tạo bài viết
+        </button>
+      </div>
+
+      <!-- Create Thread Form (Hidden) -->
+      <div id="create-thread-form" class="create-form hidden">
+        <h3 class="form-title">Tạo bài viết mới</h3>
+        <div class="form-group">
+          <label>Tiêu đề</label>
+          <input type="text" id="thread-title" placeholder="Nhập tiêu đề bài viết...">
+        </div>
+        <div class="form-group">
+          <label>Nội dung</label>
+          <textarea id="thread-content" rows="4" placeholder="Nội dung thảo luận..."></textarea>
+        </div>
+        <div class="form-actions">
+           <button id="cancel-thread-btn" class="btn-secondary">Hủy</button>
+           <button id="submit-thread-btn" class="btn-primary">Đăng bài</button>
+        </div>
+      </div>
+
+      <!-- Threads List -->
+      <div class="threads-list" id="threads-container">
+         <!-- Injected by JS -->
+         <div class="loading">Đang tải...</div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<template id="thread-item-template">
+  <div class="thread-item">
+    <div class="thread-vote">
+       <div class="vote-count">0</div>
+       <div>votes</div>
+    </div>
+    <div class="thread-info">
+       <a href="#" class="thread-link">
+         <h3 class="thread-title">Title</h3>
+       </a>
+       <p class="thread-excerpt">Excerpt...</p>
+       <div class="thread-meta">
+         <span class="thread-author">Author</span>
+         <span class="thread-date">Date</span>
+         <span class="thread-comments">0 comments</span>
+       </div>
+    </div>
+  </div>
+</template>
+
+<style>
+  .page-content {
+    padding-top: calc(var(--header-height) + var(--spacing-2xl));
+    min-height: 100vh;
+  }
+
+  .form-title {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .forum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .forum-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: bold;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .forum-header p {
+    color: var(--color-text-muted);
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+  }
+  
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-right: 10px;
+  }
+
+  /* Create Form */
+  .create-form {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-xl);
+    animation: slideDown 0.3s ease;
+  }
+
+  .hidden { display: none; }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-group { margin-bottom: var(--spacing-md); }
+  .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
+  .form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+  }
+
+  /* Thread List */
+  .threads-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .thread-item {
+    display: flex;
+    gap: var(--spacing-lg);
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .thread-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+  }
+
+  .thread-vote {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-background);
+    padding: 10px;
+    border-radius: var(--radius-md);
+    min-width: 60px;
+    height: fit-content;
+  }
+
+  .vote-count {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-primary);
+  }
+
+  .thread-info { flex: 1; }
+
+  .thread-link { text-decoration: none; }
+  .thread-title {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+  }
+
+  .thread-excerpt {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .thread-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script>
+  // --- MOCK DATA LOGIC ---
+  interface Thread {
+    id: string;
+    title: string;
+    content: string;
+    author: string;
+    createdAt: number;
+    votes: number;
+    commentCount: number;
+  }
+
+  function getThreads(): Thread[] {
+    const threads = JSON.parse(localStorage.getItem('movie247_threads') || '[]');
+    // Use fallback sample data if empty
+    if (threads.length === 0) {
+       const samples = [
+         { id: 't1', title: 'Phim nào hay nhất năm 2024?', content: 'Mọi người thấy phim nào đáng xem nhất trong năm nay?', author: 'Admin', createdAt: Date.now(), votes: 15, commentCount: 3 },
+         { id: 't2', title: 'Thảo luận về đoạn kết Squid Game 2', content: 'Mình thấy cái kết hơi khó hiểu...', author: 'Member123', createdAt: Date.now() - 86400000, votes: 8, commentCount: 1 }
+       ];
+       localStorage.setItem('movie247_threads', JSON.stringify(samples));
+       return samples;
+    }
+    return threads.sort((a: any, b: any) => b.createdAt - a.createdAt);
+  }
+
+  function addThread(title: string, content: string) {
+    const threads = getThreads();
+    const newThread: Thread = {
+      id: 'thread_' + Date.now(),
+      title,
+      content,
+      author: 'Bạn', // Mock user
+      createdAt: Date.now(),
+      votes: 0,
+      commentCount: 0
+    };
+    threads.unshift(newThread); // Add to top
+    localStorage.setItem('movie247_threads', JSON.stringify(threads));
+    renderThreads();
+  }
+
+  // --- UI LOGIC ---
+  const container = document.getElementById('threads-container');
+  const template = document.getElementById('thread-item-template') as HTMLTemplateElement;
+  const createBtn = document.getElementById('create-thread-btn');
+  const createForm = document.getElementById('create-thread-form');
+  const cancelBtn = document.getElementById('cancel-thread-btn');
+  const submitBtn = document.getElementById('submit-thread-btn');
+  const titleInput = document.getElementById('thread-title') as HTMLInputElement;
+  const contentInput = document.getElementById('thread-content') as HTMLTextAreaElement;
+
+  function renderThreads() {
+    if(!container) return;
+    const threads = getThreads();
+    container.innerHTML = '';
+
+    threads.forEach(thread => {
+      const clone = template.content.cloneNode(true) as DocumentFragment;
+      
+      const titleEl = clone.querySelector('.thread-title');
+      if(titleEl) titleEl.textContent = thread.title;
+
+      const linkEl = clone.querySelector('.thread-link') as HTMLAnchorElement;
+      if(linkEl) linkEl.href = `/forum/${thread.id}`;
+
+      const excerptEl = clone.querySelector('.thread-excerpt');
+      if(excerptEl) excerptEl.textContent = thread.content;
+
+      const countEl = clone.querySelector('.vote-count');
+      if(countEl) countEl.textContent = String(thread.votes);
+      
+      const authorEl = clone.querySelector('.thread-author');
+      if(authorEl) authorEl.textContent = thread.author;
+
+      const dateEl = clone.querySelector('.thread-date');
+      if(dateEl) dateEl.textContent = new Date(thread.createdAt).toLocaleDateString();
+
+      container.appendChild(clone);
+    });
+  }
+
+  createBtn?.addEventListener('click', () => {
+    createForm?.classList.remove('hidden');
+    titleInput?.focus();
+  });
+
+  cancelBtn?.addEventListener('click', () => {
+    createForm?.classList.add('hidden');
+  });
+
+  submitBtn?.addEventListener('click', () => {
+    if(titleInput.value && contentInput.value) {
+      addThread(titleInput.value, contentInput.value);
+      createForm?.classList.add('hidden');
+      titleInput.value = '';
+      contentInput.value = '';
+    } else {
+      alert('Vui lòng nhập đầy đủ tiêu đề và nội dung');
+    }
+  });
+
+  // Init
+  renderThreads();
+</script>

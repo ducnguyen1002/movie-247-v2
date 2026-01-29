@@ -1,0 +1,501 @@
+---
+import { useTranslations } from '../../lib/useTranslations';
+
+interface Props {
+  targetId: string; // Movie slug or Thread ID
+  targetType: 'movie' | 'forum';
+}
+
+const { targetId, targetType } = Astro.props;
+const langCookie = Astro.cookies.get('language');
+const { t } = useTranslations(langCookie?.value);
+---
+
+<div class="comment-section" data-target-id={targetId} data-target-type={targetType}>
+  <div class="comment-header">
+    <h3>{t('movie.comments')} <span id="comment-count">(0)</span></h3>
+    
+    <div class="sort-controls">
+      <button class="sort-btn active" data-sort="newest">{t('search.newest')}</button>
+      <button class="sort-btn" data-sort="top">{t('search.topRated')}</button>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="comment-input-area">
+    <div class="user-avatar">
+      <div class="avatar-placeholder">?</div>
+    </div>
+    <div class="input-wrapper">
+      <textarea 
+        id="new-comment-content" 
+        placeholder={t('search.placeholder')} 
+        rows="2"
+      ></textarea>
+      <div class="input-actions">
+        <button id="submit-comment-btn" class="btn-submit">
+          {t('common.next')} 
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments List -->
+  <div id="comments-list" class="comments-list">
+    <!-- Comments will be injected here via JS -->
+    <div class="loading-spinner">{t('common.loading')}</div>
+  </div>
+</div>
+
+<template id="comment-template">
+  <div class="comment-item">
+    <div class="comment-avatar">
+      <div class="avatar-img"></div>
+    </div>
+    <div class="comment-content">
+      <div class="comment-meta">
+        <span class="comment-author"></span>
+        <span class="comment-time"></span>
+      </div>
+      <div class="comment-text"></div>
+      <div class="comment-actions">
+        <button class="action-btn upvote-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          <span class="count">0</span>
+        </button>
+        <button class="action-btn downvote-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+        </button>
+        <button class="action-btn reply-btn">Phản hồi</button>
+      </div>
+      
+      <!-- Reply Input Container (Hidden by default) -->
+      <div class="reply-input-container hidden">
+         <textarea class="reply-textarea" rows="1" placeholder="Viết phản hồi..."></textarea>
+         <button class="btn-submit cancel-reply">Hủy</button>
+         <button class="btn-submit submit-reply">Gửi</button>
+      </div>
+
+      <!-- Replies List -->
+      <div class="replies-list"></div>
+    </div>
+  </div>
+</template>
+
+<style>
+  .comment-section {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+  }
+
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-md);
+  }
+
+  .comment-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+  }
+
+  .sort-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .sort-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+  }
+
+  .sort-btn.active {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Input Area */
+  .comment-input-area {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .user-avatar, .comment-avatar {
+    flex-shrink: 0;
+  }
+
+  .avatar-placeholder, .avatar-img {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--color-primary), #9c27b0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .avatar-img {
+    background: var(--color-surface-hover); /* Default random color handled in JS maybe? */
+    color: var(--color-text-primary);
+  }
+
+  .input-wrapper {
+    flex: 1;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    transition: border-color var(--transition-fast);
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--color-primary);
+  }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    resize: vertical;
+    outline: none;
+    min-height: 40px;
+  }
+
+  .input-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing-xs);
+  }
+
+  .btn-submit {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    transition: opacity var(--transition-fast);
+  }
+
+  .btn-submit:hover {
+    opacity: 0.9;
+  }
+
+  .btn-submit.cancel-reply {
+    background: transparent;
+    color: var(--color-text-muted);
+    margin-right: var(--spacing-sm);
+  }
+
+  /* Comments List */
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  .comment-item {
+    display: flex;
+    gap: var(--spacing-md);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .comment-content {
+    flex: 1;
+  }
+
+  .comment-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: 4px;
+    font-size: var(--font-size-sm);
+  }
+
+  .comment-author {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+  }
+
+  .comment-time {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .comment-text {
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .comment-actions {
+    display: flex;
+    gap: var(--spacing-md);
+  }
+
+  .action-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    padding: 4px 0;
+    transition: color var(--transition-fast);
+  }
+
+  .action-btn:hover {
+    color: var(--color-text-primary);
+  }
+
+  .action-btn.active {
+    color: var(--color-primary);
+  }
+
+  .replies-list {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    /* Border or indent for replies */
+    /* border-left: 2px solid var(--color-border); */
+    /* padding-left: var(--spacing-md); */
+  }
+
+  /* Reply Input */
+  .reply-input-container {
+    margin-top: var(--spacing-sm);
+    background: var(--color-background);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  // Simple Mock Storage
+  interface Comment {
+    id: string;
+    targetId: string;
+    author: string;
+    content: string;
+    timestamp: number;
+    upvotes: number;
+    downvotes: number;
+    parentId: string | null;
+    userVote?: 'up' | 'down'; // Local state only
+  }
+
+  class CommentManager {
+    static getComments(targetId: string): Comment[] {
+      const allComments = JSON.parse(localStorage.getItem('movie247_comments') || '[]');
+      return allComments.filter((c: Comment) => c.targetId === targetId).sort((a: Comment, b: Comment) => b.timestamp - a.timestamp);
+    }
+
+    static addComment(comment: Comment) {
+      const allComments = JSON.parse(localStorage.getItem('movie247_comments') || '[]');
+      allComments.push(comment);
+      localStorage.setItem('movie247_comments', JSON.stringify(allComments));
+    }
+
+    static updateVote(commentId: string, type: 'up' | 'down', remove: boolean = false) {
+       const allComments = JSON.parse(localStorage.getItem('movie247_comments') || '[]');
+       const idx = allComments.findIndex((c: Comment) => c.id === commentId);
+       if(idx !== -1) {
+          if (type === 'up') allComments[idx].upvotes += (remove ? -1 : 1);
+          if (type === 'down') allComments[idx].downvotes += (remove ? -1 : 1);
+          localStorage.setItem('movie247_comments', JSON.stringify(allComments));
+       }
+    }
+  }
+
+  // --- UI Components ---
+  const section = document.querySelector('.comment-section') as HTMLElement;
+  const targetId = section?.dataset.targetId || '';
+  const commentListEl = document.getElementById('comments-list');
+  const template = document.getElementById('comment-template') as HTMLTemplateElement;
+  const submitBtn = document.getElementById('submit-comment-btn');
+  const newCommentText = document.getElementById('new-comment-content') as HTMLTextAreaElement;
+  const countEl = document.getElementById('comment-count');
+
+  // User Auth Mock (Store in simple local var or storage)
+  const currentUser = localStorage.getItem('movie247_username') || 'Khách_' + Math.floor(Math.random() * 1000);
+
+  function renderComments() {
+    if (!commentListEl) return;
+    const comments = CommentManager.getComments(targetId);
+    
+    // Update count
+    if(countEl) countEl.textContent = `(${comments.length})`;
+
+    commentListEl.innerHTML = '';
+    
+    // Group by Parent (Top level vs Replies)
+    const rootComments = comments.filter(c => !c.parentId);
+    const replyComments = comments.filter(c => c.parentId);
+
+    if (rootComments.length === 0) {
+      commentListEl.innerHTML = '<div class="empty-state" style="text-align:center; padding: 20px; color: var(--color-text-muted);">Chưa có bình luận nào. Hãy là người đầu tiên!</div>';
+      return;
+    }
+
+    rootComments.forEach(comment => {
+      const el = createCommentElement(comment, replyComments);
+      commentListEl.appendChild(el);
+    });
+  }
+
+  function createCommentElement(comment: Comment, allReplies: Comment[]) {
+    const clone = template.content.cloneNode(true) as DocumentFragment;
+    const el = clone.querySelector('.comment-item') as HTMLElement;
+    
+    // Populate Data
+    const authorEl = el.querySelector('.comment-author');
+    if(authorEl) authorEl.textContent = comment.author;
+
+    const timeEl = el.querySelector('.comment-time');
+    if(timeEl) timeEl.textContent = new Date(comment.timestamp).toLocaleDateString('vi-VN') + ' ' + new Date(comment.timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+
+    const textEl = el.querySelector('.comment-text');
+    if(textEl) textEl.textContent = comment.content;
+
+    // Votes
+    const upBtn = el.querySelector('.upvote-btn');
+    const downBtn = el.querySelector('.downvote-btn');
+    const countSpan = upBtn?.querySelector('.count');
+    
+    // Load local vote state
+    const userVotes = JSON.parse(localStorage.getItem('movie247_user_votes') || '{}');
+    const myVote = userVotes[comment.id]; // 'up' or 'down'
+
+    if (countSpan) countSpan.textContent = String(comment.upvotes);
+    if (myVote === 'up' && upBtn) upBtn.classList.add('active');
+    if (myVote === 'down' && downBtn) downBtn.classList.add('active');
+
+    // Event Listeners for Votes
+    if (upBtn) upBtn.addEventListener('click', () => handleVote(comment.id, 'up', upBtn, downBtn, countSpan as HTMLElement));
+    if (downBtn) downBtn.addEventListener('click', () => handleVote(comment.id, 'down', downBtn, upBtn, countSpan as HTMLElement));
+
+    // Replies
+    const replies = allReplies.filter(r => r.parentId === comment.id);
+    const repliesList = el.querySelector('.replies-list');
+    
+    replies.forEach(reply => {
+      const replyEl = createCommentElement(reply, allReplies); // Recursive for nested replies support if needed, currently 1 level deep effectively
+      repliesList?.appendChild(replyEl);
+    });
+
+    // Reply Action
+    const replyBtn = el.querySelector('.reply-btn');
+    const replyInputContainer = el.querySelector('.reply-input-container');
+    const cancelReplyBtn = replyInputContainer?.querySelector('.cancel-reply');
+    const submitReplyBtn = replyInputContainer?.querySelector('.submit-reply');
+    const replyTextarea = replyInputContainer?.querySelector('textarea') as HTMLTextAreaElement;
+
+    replyBtn?.addEventListener('click', () => {
+      replyInputContainer?.classList.toggle('hidden');
+    });
+
+    cancelReplyBtn?.addEventListener('click', () => {
+       replyInputContainer?.classList.add('hidden');
+       if(replyTextarea) replyTextarea.value = '';
+    });
+
+    submitReplyBtn?.addEventListener('click', () => {
+       if (replyTextarea && replyTextarea.value.trim()) {
+         addComment(replyTextarea.value.trim(), comment.id);
+         replyInputContainer?.classList.add('hidden');
+         if(replyTextarea) replyTextarea.value = '';
+       }
+    });
+
+    return el;
+  }
+
+  function handleVote(commentId: string, type: 'up' | 'down', btn: Element | null, otherBtn: Element | null, countSpan: Element | null) {
+      const userVotes = JSON.parse(localStorage.getItem('movie247_user_votes') || '{}');
+      const currentVote = userVotes[commentId];
+
+      if (currentVote === type) {
+          // Toggle off
+          delete userVotes[commentId];
+          btn?.classList.remove('active');
+          CommentManager.updateVote(commentId, type, true); // remove
+      } else {
+          // New vote or switch
+          if (currentVote) {
+             // Remove old vote first
+             CommentManager.updateVote(commentId, currentVote, true);
+             otherBtn?.classList.remove('active');
+          }
+          userVotes[commentId] = type;
+          btn?.classList.add('active');
+          CommentManager.updateVote(commentId, type, false); // add
+      }
+      
+      localStorage.setItem('movie247_user_votes', JSON.stringify(userVotes));
+      renderComments(); // Re-render to show numbers (inefficient but simple)
+  }
+
+  function addComment(content: string, parentId: string | null = null) {
+    const newComment: Comment = {
+      id: 'cmt_' + Date.now(),
+      targetId: targetId,
+      author: currentUser,
+      content: content,
+      timestamp: Date.now(),
+      upvotes: 0,
+      downvotes: 0,
+      parentId: parentId
+    };
+
+    CommentManager.addComment(newComment);
+    renderComments();
+  }
+
+  // Bind Submit
+  submitBtn?.addEventListener('click', () => {
+    if (newCommentText.value.trim()) {
+      addComment(newCommentText.value.trim());
+      newCommentText.value = '';
+    }
+  });
+
+  // Initial Load
+  renderComments();
+
+</script>

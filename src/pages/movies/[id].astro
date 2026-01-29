@@ -5,6 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import MovieCarousel from '../../components/movie/MovieCarousel.astro';
+import CommentSection from '../../components/forum/CommentSection.astro';
 import { getMovieDetailBySlug, getNewUpdatedMovies, getImageUrl } from '../../lib/movieService';
 
 const { id } = Astro.params;
@@ -175,6 +176,9 @@ const displayTitle = lang === 'vi' ? movie.name : (movie.origin_name || movie.na
           </div>
         </section>
       )}
+
+      <!-- Comments -->
+      <CommentSection targetId={movie.slug} targetType="movie" />
 
       <!-- Related Movies -->
       {relatedMovies.length > 0 && (
