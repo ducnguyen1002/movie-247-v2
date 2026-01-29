@@ -1,32 +1,39 @@
-# ---------- Build stage ----------
+# Build Stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+# Copy package files for dependency installation
+COPY package.json package-lock.json* ./
 
-# Install deps
+# Install dependencies (using npm ci for faster, more reliable builds)
 RUN npm ci
 
-# Copy source
+# Copy the rest of the application code
 COPY . .
 
-# Build Astro
+# Build the Astro application
 RUN npm run build
 
-
-# ---------- Run stage ----------
-FROM node:20-alpine
+# Runtime Stage
+FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-# Install static server
-RUN npm install -g serve
+# Set environment variables
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
 
-# Copy built files
+# Copy build output from the builder stage
+# With @astrojs/node in 'standalone' mode, dist contains all necessary files
 COPY --from=builder /app/dist ./dist
 
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Serve static site
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Use the built-in 'node' user for security (instead of root)
+USER node
+
+# Start the server
+CMD ["node", "./dist/server/entry.mjs"]
