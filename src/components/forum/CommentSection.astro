@@ -13,7 +13,7 @@ const { t } = useTranslations(langCookie?.value);
 
 <div class="comment-section" data-target-id={targetId} data-target-type={targetType}>
   <div class="comment-header">
-    <h3>{t('movie.comments')} <span id="comment-count">(0)</span></h3>
+    <h3>{t('movie.comments')} <span id="comment-count" class="comment-count">(0)</span></h3>
     
     <div class="sort-controls">
       <button class="sort-btn active" data-sort="newest">{t('search.newest')}</button>
@@ -23,18 +23,19 @@ const { t } = useTranslations(langCookie?.value);
 
   <!-- Input Area -->
   <div class="comment-input-area">
-    <div class="user-avatar">
-      <div class="avatar-placeholder">?</div>
-    </div>
+
     <div class="input-wrapper">
       <textarea 
         id="new-comment-content" 
-        placeholder={t('search.placeholder')} 
-        rows="2"
+        placeholder="Viết bình luận..." 
+        rows="1"
       ></textarea>
       <div class="input-actions">
         <button id="submit-comment-btn" class="btn-submit">
-          {t('common.next')} 
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
         </button>
       </div>
     </div>
@@ -103,12 +104,22 @@ const { t } = useTranslations(langCookie?.value);
     margin-bottom: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
     padding-bottom: var(--spacing-md);
+    gap: var(--spacing-sm);
   }
 
   .comment-header h3 {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .comment-count {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-md);
+    font-weight: normal;
   }
 
   .sort-controls {
@@ -160,13 +171,18 @@ const { t } = useTranslations(langCookie?.value);
   }
 
   .input-wrapper {
+    position: relative;
     flex: 1;
     background: var(--color-background);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: var(--spacing-sm);
+    padding: 8px 12px;
     transition: border-color var(--transition-fast);
+    display: flex;
+    align-items: end;
+    gap: var(--spacing-sm);
   }
+
 
   .input-wrapper:focus-within {
     border-color: var(--color-primary);
@@ -181,28 +197,34 @@ const { t } = useTranslations(langCookie?.value);
     font-size: var(--font-size-md);
     resize: vertical;
     outline: none;
-    min-height: 40px;
+    min-height: 80px;
+    padding: 4px 0;
   }
 
   .input-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: var(--spacing-xs);
+    margin-top: 0;
   }
 
   .btn-submit {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
     background: var(--color-primary);
-    color: white;
+    color: var(--color-text-primary);
     border: none;
-    padding: 6px 16px;
+    padding: 4px;
     border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: var(--font-weight-medium);
-    transition: opacity var(--transition-fast);
+    transition: all var(--transition-fast);
+    display: flex;
   }
 
   .btn-submit:hover {
-    opacity: 0.9;
+    background: var(--color-surface-hover);
+    transform: translateX(2px);
   }
 
   .btn-submit.cancel-reply {
@@ -304,6 +326,40 @@ const { t } = useTranslations(langCookie?.value);
 
   .hidden {
     display: none !important;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .comment-section {
+      margin-top: var(--spacing-lg);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+    }
+
+    .comment-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+    }
+
+    .sort-controls {
+      width: 100%;
+      gap: var(--spacing-md);
+    }
+
+    .comment-item {
+      gap: var(--spacing-sm);
+    }
+
+    .avatar-placeholder, .avatar-img {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+    
+    .comment-actions {
+      gap: var(--spacing-sm);
+    }
   }
 </style>
 

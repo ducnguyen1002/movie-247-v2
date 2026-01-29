@@ -44,7 +44,7 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
-              {translations.common.playNow || 'Xem ngay'}
+              <span>{translations.common.playNow || 'Xem ngay'}</span>
             </button>
             <button 
               class="popup-btn watchlist-btn"
@@ -255,11 +255,29 @@ const displayTitle = lang === 'vi' ? (titleVi || title) : title;
     background: white;
     color: black;
     padding: 6px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
   
   .play-btn-small:hover {
     background: var(--color-primary);
     color: white;
+  }
+
+  @media (max-width: 576px) {
+    .play-btn-small {
+      padding: 6px;
+    }
+
+    .play-btn-small span {
+      display: none;
+    }
+    
+    .popup-actions {
+      gap: 4px;
+    }
   }
 
   .watchlist-btn {
